@@ -239,6 +239,7 @@ fun MainMenu(
     }
 }
 
+@Suppress("KotlinConstantConditions")
 @Composable
 fun MainMenuButton(
     text: String,
