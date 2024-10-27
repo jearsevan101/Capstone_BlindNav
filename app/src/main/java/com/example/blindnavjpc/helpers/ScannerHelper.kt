@@ -14,6 +14,21 @@ import java.net.URLDecoder
 import java.util.Locale
 
 class ScannerHelper(private val context: Context) {
+    private var onMarkerDetectedCallback: ((Int) -> Unit)? = null
+    private var _lastDetectedMarker: Int? = null
+
+    val lastDetectedMarker: Int?
+        get() = _lastDetectedMarker
+
+    fun setOnMarkerDetectedListener(callback: (Int) -> Unit) {
+        onMarkerDetectedCallback = callback
+    }
+
+    // Call this when a marker is detected from your scanner
+    fun onMarkerDetected(markerId: Int) {
+        _lastDetectedMarker = markerId
+        onMarkerDetectedCallback?.invoke(markerId)
+    }
     private var isScannerInstalled = false
     private lateinit var scanner: GmsBarcodeScanner
     private lateinit var textToSpeech: TextToSpeech
@@ -109,5 +124,9 @@ class ScannerHelper(private val context: Context) {
             textToSpeech.stop()
             textToSpeech.shutdown()
         }
+    }
+
+    fun setOnMarkerDetectedListener(any: Any) {
+        //kalau ada aruco kedetect
     }
 }

@@ -33,9 +33,12 @@ import androidx.compose.ui.res.vectorResource
 import com.example.blindnavjpc.helpers.SearchBarHelper
 import com.example.blindnavjpc.helpers.TTSManager
 import kotlinx.coroutines.launch
+import com.example.blindnavjpc.dataconnection.NavigationState
 
 @Composable
-fun MainScreen(scannerHelper: ScannerHelper) {
+fun MainScreen(scannerHelper: ScannerHelper,
+               navigationState: NavigationState,
+               onDestinationSelected: (Int) -> Unit) {
     var currentScreen by remember { mutableStateOf("main") }
     var selectedFloor by remember { mutableIntStateOf(1) }
     var selectedCategory by remember { mutableStateOf("") }
@@ -147,6 +150,7 @@ fun MainScreen(scannerHelper: ScannerHelper) {
                 category = selectedCategory,
                 onRoomSelected = { room ->
                     selectedRoom = room
+                    // disini panggil onDestinationSelected terus kasi id roomnya
                     currentScreen = "navigation"
                 },
                 onBackClick = {
