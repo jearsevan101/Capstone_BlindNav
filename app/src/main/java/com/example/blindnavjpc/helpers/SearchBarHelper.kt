@@ -5,6 +5,7 @@ import android.content.Intent
 import android.speech.RecognizerIntent
 import androidx.activity.result.ActivityResultLauncher
 import android.widget.Toast
+import com.example.blindnavjpc.screens.Room
 
 class SearchBarHelper(
     private val context: Context
@@ -48,8 +49,8 @@ class SearchBarHelper(
                 val rooms = getRoomsForFloorAndCategory(floor, category)
                 for (room in rooms) {
                     // Check for a match
-                    if (room.lowercase().contains(voiceInput.lowercase())) {
-                        return RoomInfo(room, floor, category)
+                    if (room.name.lowercase().contains(voiceInput.lowercase())) {
+                        return RoomInfo(room.name, floor, category)
                     }
                 }
             }
@@ -57,7 +58,7 @@ class SearchBarHelper(
         return null
     }
 
-    private fun getRoomsForFloorAndCategory(floor: Int, category: String): List<String> {
+    private fun getRoomsForFloorAndCategory(floor: Int, category: String): List<Room> {
         return com.example.blindnavjpc.screens.getRoomsForFloorAndCategory(floor, category)
     }
 

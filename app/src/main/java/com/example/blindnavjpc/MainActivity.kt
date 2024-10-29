@@ -91,10 +91,14 @@ class MainActivity : ComponentActivity() {
     private fun handleMarkerDetection(markerId: Int) {
         lifecycleScope.launch {
             if (navigationService.isNavigating()) {
-                // If we're already navigating, update current location
                 navigationService.updateLocation(markerId)
+                // If navigation is complete, go back to main screen
+                if (!navigationService.isNavigating()) {
+                    TTSManager.speak("Anda telah tiba di tujuan")
+                    // Reset navigation state
+                    currentDestination = null
+                }
             } else {
-                // If we have a destination but haven't started navigation, start it
                 currentDestination?.let { destinationId ->
                     startNavigation(markerId, destinationId)
                 }

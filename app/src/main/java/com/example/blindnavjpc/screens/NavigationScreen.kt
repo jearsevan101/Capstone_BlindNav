@@ -21,12 +21,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.blindnavjpc.R
+import com.example.blindnavjpc.dataconnection.NavigationState
 import com.example.blindnavjpc.helpers.TTSManager
 import com.example.blindnavjpc.ui.theme.fontFamily
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NavigationScreen(onBackToHomeClick: () -> Unit, onDiscardClick: () -> Unit) {
+fun NavigationScreen(navigationState: NavigationState,
+                     onBackToHomeClick: () -> Unit,
+                     onDiscardClick: () -> Unit,
+                     onScanClick: () -> Unit) {
     // Voice guidance when screen is shown
     LaunchedEffect(Unit) {
         TTSManager.speak(
@@ -34,6 +38,20 @@ fun NavigationScreen(onBackToHomeClick: () -> Unit, onDiscardClick: () -> Unit) 
                     "Untuk kembali ke layar sebelumnya, silakan tekan tombol 'kembali' di kiri bawah. " +
                     "Untuk kembali ke layar awal, silakan klik tombol 'home' di sebelah kanan bawah."
         )
+    }
+
+    // Listen for navigation state changes
+    LaunchedEffect(navigationState) {
+        // Speak navigation updates
+        if (navigationState.direction.isNotEmpty()) {
+            TTSManager.speak(navigationState.direction)
+        }
+        if (navigationState.distance.isNotEmpty()) {
+            TTSManager.speak(navigationState.distance)
+        }
+        navigationState.error?.let { error ->
+            TTSManager.speak("Error: $error")
+        }
     }
 
     Scaffold(
@@ -69,6 +87,7 @@ fun NavigationScreen(onBackToHomeClick: () -> Unit, onDiscardClick: () -> Unit) 
                 ) {
                     Button(
                         onClick = {
+                            onScanClick.invoke()
                             // Logic untuk memindai ArUco dapat ditambahkan di sini
                         },
                         modifier = Modifier
@@ -84,6 +103,19 @@ fun NavigationScreen(onBackToHomeClick: () -> Unit, onDiscardClick: () -> Unit) 
                             painter = painterResource(id = R.drawable.baseline_navigation_24), // Use a navigation icon
                             contentDescription = null, // No content description for icon
                             modifier = Modifier.size(60.dp) // Make the icon bigger to match the larger button
+                        )
+                    }
+                    // Display current navigation information
+                    if (navigationState.isNavigating) {
+                        Text(
+                            text = navigationState.currentLocation,
+                            modifier = Modifier.padding(16.dp),
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = navigationState.nextMarker,
+                            modifier = Modifier.padding(16.dp),
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
@@ -149,7 +181,9 @@ fun NavigationScreen(onBackToHomeClick: () -> Unit, onDiscardClick: () -> Unit) 
 @Composable
 fun PreviewNavigationScreen() {
     NavigationScreen(
+        navigationState = NavigationState(),
         onDiscardClick = {},
-        onBackToHomeClick = {}
+        onBackToHomeClick = {},
+        onScanClick = {}
     )
 }

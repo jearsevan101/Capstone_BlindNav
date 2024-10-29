@@ -3,6 +3,7 @@ package com.example.blindnavjpc.helpers
 import android.content.Context
 import android.content.Intent
 import android.speech.tts.TextToSpeech
+import android.widget.TextView
 import android.widget.Toast
 import com.example.blindnavjpc.MainActivity
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -16,14 +17,20 @@ import java.util.Locale
 class ScannerHelper(private val context: Context) {
     private var onMarkerDetectedCallback: ((Int) -> Unit)? = null
     private var _lastDetectedMarker: Int? = null
-
+    private var scanMode: ScanMode = ScanMode.CONTINUOUS
+    enum class ScanMode {
+        SINGLE_SCAN,  // Scan once and close
+        CONTINUOUS    // Continue scanning after detection
+    }
     val lastDetectedMarker: Int?
         get() = _lastDetectedMarker
 
     fun setOnMarkerDetectedListener(callback: (Int) -> Unit) {
         onMarkerDetectedCallback = callback
     }
-
+    fun setScanMode(mode: ScanMode) {
+        scanMode = mode
+    }
     // Call this when a marker is detected from your scanner
     fun onMarkerDetected(markerId: Int) {
         _lastDetectedMarker = markerId
@@ -58,7 +65,7 @@ class ScannerHelper(private val context: Context) {
     }
 
     fun startScanning(
-        onSuccess: (String) -> Unit,
+        onSuccess: (Int) -> Unit,
         onCancelled: () -> Unit = {},
         onError: (String) -> Unit = {}
     ) {
@@ -67,10 +74,32 @@ class ScannerHelper(private val context: Context) {
                 .addOnSuccessListener { barcode ->
                     val rawValue = barcode.rawValue
                     if (rawValue != null) {
-                        // Ekstrak dan proses konten QR
+                        // Check if QR content is numeric
                         val content = extractContentFromQR(rawValue)
-                        speakText(content) // Langsung membaca konten
-                        onSuccess(content)
+                        if (content.isNumeric()) {
+                            val markerId = content.toInt()
+                            val displayText = "Marker ID: $markerId"
+
+                            // Handle the marker detection based on scan mode
+                            when (scanMode) {
+                                ScanMode.SINGLE_SCAN -> {
+                                    onMarkerDetected(markerId)
+                                    speakText("Marker ID $markerId detected")
+                                    onSuccess(markerId)
+                                    // Close the scanner after detection
+                                    cleanup()
+                                }
+                                ScanMode.CONTINUOUS -> {
+                                    onMarkerDetected(markerId)
+                                    speakText("Marker ID $markerId detected")
+                                    onSuccess(markerId)
+                                    // Continue scanning - no cleanup
+                                }
+                            }
+                        } else {
+                            speakText("Invalid marker format")
+                            onError("Invalid marker format: Not a number")
+                        }
                     }
                 }
                 .addOnCanceledListener {
@@ -87,7 +116,9 @@ class ScannerHelper(private val context: Context) {
             onError(errorMessage)
         }
     }
-
+    private fun String.isNumeric(): Boolean {
+        return this.all { it.isDigit() }
+    }
     private fun extractContentFromQR(qrValue: String): String {
         return try {
             when {
@@ -124,9 +155,5 @@ class ScannerHelper(private val context: Context) {
             textToSpeech.stop()
             textToSpeech.shutdown()
         }
-    }
-
-    fun setOnMarkerDetectedListener(any: Any) {
-        //kalau ada aruco kedetect
     }
 }

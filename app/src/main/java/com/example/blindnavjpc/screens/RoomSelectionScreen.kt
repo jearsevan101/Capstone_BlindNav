@@ -21,13 +21,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.LaunchedEffect
 import com.example.blindnavjpc.helpers.TTSManager
+import kotlin.random.Random
 
+// Data class to hold room information
+data class Room(
+    val id: Int,
+    val number: String,
+    val name: String,
+    val fullName: String
+)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoomSelectionScreen(
     floor: Int,
     category: String,
-    onRoomSelected: (String) -> Unit,
+    onRoomSelected: (Room) -> Unit,
     onBackClick: () -> Unit
 ) {
 
@@ -65,21 +73,19 @@ fun RoomSelectionScreen(
                     .fillMaxSize()
                     .padding(bottom = 32.dp, start = 16.dp, end = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
-
             ) {
                 Text(
                     text = "Kategori: $category",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp, top= 32.dp),
+                    modifier = Modifier.padding(bottom = 16.dp, top = 32.dp),
                     textAlign = TextAlign.Center
                 )
 
-                // LazyColumn untuk daftar ruangan
                 LazyColumn(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
-                        .padding(bottom = 80.dp), // Beri jarak di bagian bawah agar tidak menutupi tombol "Kembali"
+                        .padding(bottom = 80.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -89,7 +95,7 @@ fun RoomSelectionScreen(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(100.dp))
+
             Button(
                 onClick = onBackClick,
                 modifier = Modifier
@@ -117,13 +123,13 @@ fun RoomSelectionScreen(
 }
 
 @Composable
-fun RoomButton(room: String, onRoomSelected: (String) -> Unit) {
+fun RoomButton(room: Room, onRoomSelected: (Room) -> Unit) {
     Button(
         onClick = { onRoomSelected(room) },
         modifier = Modifier
             .fillMaxWidth()
             .height(80.dp)
-            .semantics { contentDescription = "Pilih Ruangan $room" },
+            .semantics { contentDescription = "Pilih Ruangan ${room.fullName}" },
         shape = RoundedCornerShape(15.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = colorResource(id = R.color.secondary),
@@ -132,7 +138,7 @@ fun RoomButton(room: String, onRoomSelected: (String) -> Unit) {
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         Text(
-            text = room.substringBefore(':'),
+            text = room.number,
             fontSize = 24.sp,
             fontFamily = fontFamily,
             textAlign = TextAlign.Center,
@@ -144,7 +150,7 @@ fun RoomButton(room: String, onRoomSelected: (String) -> Unit) {
     }
 }
 
-fun getRoomsForFloorAndCategory(floor: Int, category: String): List<String> {
+fun getRoomsForFloorAndCategory(floor: Int, category: String): List<Room> {
     return when (floor) {
         1 -> when (category) {
             "Laboratorium" -> listOf(
@@ -231,7 +237,7 @@ fun getRoomsForFloorAndCategory(floor: Int, category: String): List<String> {
                 "S307 B: S307 Lab Dasar 1 Pintu 2",
                 "S307 C: S307 Lab Dasar 1 Pintu 3",
 
-            )
+                )
             "Ruang Kantor dan Staff" -> listOf(
                 "N308: N308 Ruang Laboran"
             )
@@ -244,8 +250,17 @@ fun getRoomsForFloorAndCategory(floor: Int, category: String): List<String> {
             else -> emptyList()
         }
         else -> emptyList()
+    }.map { roomString ->
+        val parts = roomString.split(": ")
+        Room(
+            id = Random.nextInt(1, 50), // Generate random ID for now
+            number = parts[0],
+            name = parts.getOrNull(1) ?: parts[0],
+            fullName = roomString
+        )
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable

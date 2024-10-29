@@ -43,8 +43,10 @@ fun MainScreen(scannerHelper: ScannerHelper,
     var selectedFloor by remember { mutableIntStateOf(1) }
     var selectedCategory by remember { mutableStateOf("") }
     var selectedRoom by remember { mutableStateOf("") }
+    var selectedRoomID by remember { mutableIntStateOf(1) }
+    var currentArucoID by remember { mutableIntStateOf(1) }
     var isQrScanned by remember { mutableStateOf(false) }
-
+    var isScannerActive by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val searchBarHelper = remember { SearchBarHelper(context) }
     val coroutineScope = rememberCoroutineScope()
@@ -94,16 +96,22 @@ fun MainScreen(scannerHelper: ScannerHelper,
             MainMenu(
                 onScanClick = {
                     TTSManager.speak("Scan QR dimulai, silakan arahkan kamera ke QR code. Untuk membatalkan proses ini silakan tekan button X di ujung kiri atas")
+                    scannerHelper.setScanMode(ScannerHelper.ScanMode.SINGLE_SCAN)
+                    isScannerActive = true
                     scannerHelper.startScanning(
-                        onSuccess = {
+                        onSuccess = {unit->
+                            currentArucoID = unit
                             isQrScanned = true
                             currentScreen = "main"
+                            isScannerActive = false // Set isScannerActive to false
                             TTSManager.speak("Scan berhasil. Silakan pilih lantai untuk memulai navigasi.")
                         },
                         onError = {
+                            isScannerActive = false // Set isScannerActive to false
                             TTSManager.speak("Terjadi kesalahan dalam pemindaian")
                         },
                         onCancelled = {
+                            isScannerActive = false // Set isScannerActive to false
                             TTSManager.speak("Pemindaian dibatalkan") // Stop any ongoing TTS
                         }
                     )
@@ -149,8 +157,9 @@ fun MainScreen(scannerHelper: ScannerHelper,
                 floor = selectedFloor,
                 category = selectedCategory,
                 onRoomSelected = { room ->
-                    selectedRoom = room
-                    // disini panggil onDestinationSelected terus kasi id roomnya
+                    selectedRoom = room.name
+                    selectedRoomID = room.id
+                    onDestinationSelected(selectedRoomID)
                     currentScreen = "navigation"
                 },
                 onBackClick = {
@@ -160,8 +169,17 @@ fun MainScreen(scannerHelper: ScannerHelper,
         }
         "navigation" -> {
             NavigationScreen(
+                navigationState = navigationState,
                 onDiscardClick = { currentScreen = "roomSelection" },
-                onBackToHomeClick = { currentScreen = "main" }
+                onBackToHomeClick = { currentScreen = "main" },
+                onScanClick = {
+                    TTSManager.speak("Memulai pemindaian ArUco marker")
+                    scannerHelper.setScanMode(ScannerHelper.ScanMode.CONTINUOUS)
+                    scannerHelper.startScanning(
+                        onSuccess = { /* Handle success */ },
+                        onError = { TTSManager.speak("Gagal memindai marker") }
+                    )
+                }
             )
         }
     }
@@ -175,6 +193,7 @@ fun MainMenu(
     onVoiceSearchClick: () -> Unit,
     isQrScanned: Boolean
 ) {
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -297,4 +316,57 @@ fun PreviewMainMenu() {
         onVoiceSearchClick = {},
         isQrScanned = false  // Preview with QR not scanned
     )
+
+}
+@Composable
+fun ScannerOverlay(
+    onCancelClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color.Black.copy(alpha = 0.6f))
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color = Color.White, shape = RoundedCornerShape(16.dp))
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Scanning...",
+                fontSize = 24.sp,
+                fontFamily = fontFamily,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            CircularProgressIndicator(
+                modifier = Modifier.size(64.dp),
+                color = colorResource(id = R.color.primary)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            IconButton(
+                onClick = onCancelClick,
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(color = Color.LightGray, shape = CircleShape)
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(id = R.drawable.baseline_home_24),
+                    contentDescription = "Cancel Scanning",
+                    modifier = Modifier.size(32.dp),
+                    tint = Color.Black
+                )
+            }
+        }
+    }
 }
