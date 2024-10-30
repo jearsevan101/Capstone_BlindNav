@@ -1,11 +1,8 @@
 package com.example.blindnavjpc.helpers
 
 import android.content.Context
-import android.content.Intent
 import android.speech.tts.TextToSpeech
-import android.widget.TextView
 import android.widget.Toast
-import com.example.blindnavjpc.MainActivity
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanner
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
