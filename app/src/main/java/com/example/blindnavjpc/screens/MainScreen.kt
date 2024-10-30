@@ -35,8 +35,6 @@ import com.example.blindnavjpc.helpers.SearchBarHelper
 import com.example.blindnavjpc.helpers.TTSManager
 import kotlinx.coroutines.launch
 import com.example.blindnavjpc.dataconnection.NavigationState
-import com.example.blindnavjpc.dataconnection.RetrofitClient.apiService
-import com.example.blindnavjpc.dataconnection.Rooms
 
 @Composable
 fun MainScreen(
@@ -337,56 +335,4 @@ fun PreviewMainMenu() {
         isQrScanned = false  // Preview with QR not scanned
     )
 
-}
-@Composable
-fun ScannerOverlay(
-    onCancelClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = Color.Black.copy(alpha = 0.6f))
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(color = Color.White, shape = RoundedCornerShape(16.dp))
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = "Scanning...",
-                fontSize = 24.sp,
-                fontFamily = fontFamily,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            CircularProgressIndicator(
-                modifier = Modifier.size(64.dp),
-                color = colorResource(id = R.color.primary)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            IconButton(
-                onClick = onCancelClick,
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(color = Color.LightGray, shape = CircleShape)
-                    .padding(8.dp)
-            ) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(id = R.drawable.baseline_home_24),
-                    contentDescription = "Cancel Scanning",
-                    modifier = Modifier.size(32.dp),
-                    tint = Color.Black
-                )
-            }
-        }
-    }
 }
