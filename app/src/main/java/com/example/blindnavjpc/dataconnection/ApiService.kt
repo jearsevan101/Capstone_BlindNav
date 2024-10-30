@@ -12,4 +12,7 @@ interface ApiService {
 
     @GET("graph-connections")
     suspend fun getGraphConnections(): Response<List<GraphConnection>>
+
+    @GET("rooms")
+    suspend fun getRooms(): Response<List<Rooms>>
 }

@@ -12,9 +12,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
+import com.example.blindnavjpc.dataconnection.ApiService
 import com.example.blindnavjpc.dataconnection.NavigationService
 import com.example.blindnavjpc.dataconnection.NavigationUpdate
 import com.example.blindnavjpc.dataconnection.RetrofitClient
+import com.example.blindnavjpc.dataconnection.RetrofitClient.apiService
 import com.example.blindnavjpc.helpers.ScannerHelper
 import com.example.blindnavjpc.helpers.TTSManager
 import com.example.blindnavjpc.screens.LaunchScreen
@@ -75,6 +77,7 @@ class MainActivity : ComponentActivity() {
                     MainScreen(
                         scannerHelper = scannerHelper,
                         navigationState = navigationState,
+                        apiService = apiService,
                         onDestinationSelected = { destinationId ->
                             currentDestination = destinationId
                             // Start navigation when we have both source and destination
