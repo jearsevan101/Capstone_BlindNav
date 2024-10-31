@@ -14,7 +14,7 @@ import java.util.Locale
 class ScannerHelper(private val context: Context) {
     private var onMarkerDetectedCallback: ((Int) -> Unit)? = null
     private var _lastDetectedMarker: Int? = null
-    private var scanMode: ScanMode = ScanMode.CONTINUOUS
+    private var scanMode = ScanMode.SINGLE_SCAN
     enum class ScanMode {
         SINGLE_SCAN,  // Scan once and close
         CONTINUOUS    // Continue scanning after detection

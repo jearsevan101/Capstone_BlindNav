@@ -63,8 +63,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             BlindNavJPCTheme {
                 var showLaunchScreen by remember { mutableStateOf(true) }
-
-                // Collect navigation state in compose
                 val navigationState by navigationService.navigationState.collectAsState()
 
                 if (showLaunchScreen) {
@@ -80,17 +78,20 @@ class MainActivity : ComponentActivity() {
                         apiService = apiService,
                         onDestinationSelected = { destinationId ->
                             currentDestination = destinationId
-                            // Start navigation when we have both source and destination
                             scannerHelper.lastDetectedMarker?.let { currentId ->
                                 startNavigation(currentId, destinationId)
                             }
-                        }
+                        },
+                        onDistanceAngleUpdated = onDistanceAngleUpdated
                     )
                 }
             }
         }
     }
-
+    val onDistanceAngleUpdated: (Int, Float, Float) -> Unit = { newCurrentId, newDistance, newAngle ->
+        updatePositionInfo(newCurrentId,newDistance,newAngle)
+        // Do additional processing if needed
+    }
     private fun handleMarkerDetection(markerId: Int) {
         lifecycleScope.launch {
             if (navigationService.isNavigating()) {
@@ -118,7 +119,14 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
+    private fun startContinuousScanning() {
+        scannerHelper.setScanMode(ScannerHelper.ScanMode.CONTINUOUS)
+        scannerHelper.startScanning(
+            onSuccess = { /* Handle in marker detection listener */ },
+            onError = { TTSManager.speak("Gagal memindai marker") },
+            onCancelled = { /* Scanner was cancelled */ }
+        )
+    }
     // Call this method when you receive distance and angle updates
     private fun updatePositionInfo(markerId: Int, distance: Float, angle: Float) {
         lifecycleScope.launch {

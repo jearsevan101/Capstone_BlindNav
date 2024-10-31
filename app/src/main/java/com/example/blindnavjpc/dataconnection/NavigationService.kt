@@ -131,7 +131,7 @@ class NavigationService (
         if (nextStep == null) {
             updateState { it.copy(
                 isNavigating = false,
-                direction = "You have reached your destination!"
+                direction = "Kamu telah sampai di lokasi tujuanmu!"
             )}
             return
         }

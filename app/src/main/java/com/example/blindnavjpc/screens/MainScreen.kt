@@ -41,6 +41,7 @@ fun MainScreen(
     scannerHelper: ScannerHelper,
     navigationState: NavigationState,
     onDestinationSelected: (Int) -> Unit,
+    onDistanceAngleUpdated: (currentId: Int, distance: Float, angle: Float) -> Unit,
     apiService: ApiService
 ) {
     var currentScreen by remember { mutableStateOf("main") }
@@ -62,7 +63,16 @@ fun MainScreen(
             coroutineScope = coroutineScope
         )
     }
+    var distance by remember { mutableStateOf(0f) }
+    var angle by remember { mutableStateOf(0f) }
 
+    // Define the onPositionUpdate function
+    val onPositionUpdate: (Float, Float) -> Unit = { newDistance, newAngle ->
+        distance = newDistance
+        angle = newAngle
+        onDistanceAngleUpdated(currentArucoID,distance,angle)
+        // Do additional processing if needed
+    }
     val voiceLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -194,10 +204,13 @@ fun MainScreen(
                     TTSManager.speak("Memulai pemindaian ArUco marker")
                     scannerHelper.setScanMode(ScannerHelper.ScanMode.CONTINUOUS)
                     scannerHelper.startScanning(
-                        onSuccess = { /* Handle success */ },
+                        onSuccess = { unit ->
+                            currentArucoID = unit},
                         onError = { TTSManager.speak("Gagal memindai marker") }
                     )
-                }
+                },
+                onPositionUpdate = onPositionUpdate
+
             )
         }
     }
