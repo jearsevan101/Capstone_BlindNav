@@ -53,9 +53,9 @@ class NavigationManager {
     fun getRequiredTurn(targetAngle: Float): String {
         val angleDiff = (targetAngle - currentAngle + 360) % 360
         return when {
-            angleDiff <= 10 || angleDiff >= 350 -> "Keep going straight"
-            angleDiff < 180 -> "Turn right ${angleDiff.toInt()} degrees"
-            else -> "Turn left ${(360 - angleDiff).toInt()} degrees"
+            angleDiff <= 10 || angleDiff >= 350 -> "Terus Maju Kedepan"
+            angleDiff < 180 -> "Belok kanan ${angleDiff.toInt()} derajat"
+            else -> "Belok Kiri ${(360 - angleDiff).toInt()} derajat"
         }
     }
 
@@ -65,13 +65,13 @@ class NavigationManager {
 
     fun getNavigationInstruction(targetAngle: Float): String {
         if (currentDistance == 0f) {
-            return "Please update current distance and angle"
+            return "Tolong perbaharui jarak dan sudut"
         }
 
         val turnInstruction = getRequiredTurn(targetAngle)
         return when {
-            isCloseToMarker() -> "You are close to the marker. Look for the next marker."
-            else -> "$turnInstruction\nContinue for ${currentDistance.toInt()} cm"
+            isCloseToMarker() -> "Anda dekat dengan marker. Mencari marker lainnya."
+            else -> "Maju sejauh ${currentDistance.toInt()} centimeter kemudian $turnInstruction\n"
         }
     }
 
@@ -93,13 +93,13 @@ class NavigationManager {
         val angleDiff = calculateAngleDifference(normalizedCurrentAngle, normalizedTargetAngle)
 
         return when {
-            angleDiff <= 10 -> "Forward"
-            angleDiff <= 45 -> "Slight Right"
-            angleDiff <= 135 -> "Right"
-            angleDiff <= 180 -> "Turn Around"
-            angleDiff <= 225 -> "Turn Around Left"
-            angleDiff <= 315 -> "Left"
-            else -> "Slight Left"
+            angleDiff <= 10 -> "Ke Depan"
+            angleDiff <= 45 -> "Sedikit Ke kanan"
+            angleDiff <= 135 -> "Kanan"
+            angleDiff <= 180 -> "Putar Balik"
+            angleDiff <= 225 -> "Putar Balik Kiri"
+            angleDiff <= 315 -> "Kiri"
+            else -> "Sedikit ke kiri"
         }
     }
 
@@ -117,15 +117,15 @@ class NavigationManager {
     private fun getCardinalDirection(angle: Float): String {
         val normalizedAngle = normalizeAngle(angle)
         return when {
-            normalizedAngle >= 337.5f || normalizedAngle < 22.5f -> "Forward"
-            normalizedAngle < 67.5f -> "Forward Right"
-            normalizedAngle < 112.5f -> "Right"
-            normalizedAngle < 157.5f -> "Backward Right"
-            normalizedAngle < 202.5f -> "Backward"
-            normalizedAngle < 247.5f -> "Backward Left"
-            normalizedAngle < 292.5f -> "Left"
-            normalizedAngle < 337.5f -> "Forward Left"
-            else -> "Forward" // This case should never occur due to initial check
+            normalizedAngle >= 337.5f || normalizedAngle < 22.5f -> "Ke depan"
+            normalizedAngle < 67.5f -> "Ke depan kanan"
+            normalizedAngle < 112.5f -> "Kanan"
+            normalizedAngle < 157.5f -> "Belakang kanan"
+            normalizedAngle < 202.5f -> "Belakang"
+            normalizedAngle < 247.5f -> "Belakang kiri"
+            normalizedAngle < 292.5f -> "Kiri"
+            normalizedAngle < 337.5f -> "Ke depan kiri"
+            else -> "Ke depan" // This case should never occur due to initial check
         }
     }
 }

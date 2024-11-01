@@ -81,20 +81,20 @@ class ScannerHelper(private val context: Context) {
                             when (scanMode) {
                                 ScanMode.SINGLE_SCAN -> {
                                     onMarkerDetected(markerId)
-                                    speakText("Marker ID $markerId detected")
+                                    speakText("Marker ID $markerId terdeteksi")
                                     onSuccess(markerId)
                                     // Close the scanner after detection
                                     cleanup()
                                 }
                                 ScanMode.CONTINUOUS -> {
                                     onMarkerDetected(markerId)
-                                    speakText("Marker ID $markerId detected")
+                                    speakText("Marker ID $markerId terdeteksi")
                                     onSuccess(markerId)
                                     // Continue scanning - no cleanup
                                 }
                             }
                         } else {
-                            speakText("Invalid marker format")
+                            speakText("Format marker tidak valid")
                             onError("Invalid marker format: Not a number")
                         }
                     }

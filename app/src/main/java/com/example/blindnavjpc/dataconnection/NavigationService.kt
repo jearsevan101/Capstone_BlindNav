@@ -85,7 +85,7 @@ class NavigationService (
         if (nextStep == null) {
             updateState { it.copy(
                 isNavigating = false,
-                direction = "Navigation completed!"
+                direction = "Navigasi Selesai!"
             )}
             return
         }
@@ -111,15 +111,15 @@ class NavigationService (
         val navigationInstruction = navigationManager.getNavigationInstruction(nextStep.angle)
 
         updateState { it.copy(
-            currentLocation = "Current Location: Marker ${currentStep.node}\n$currentDescription",
-            nextMarker = "Next Marker: ${nextStep.node}",
-            direction = "Direction: $direction",
-            distance = "Distance: ${remainingDistance.toInt()} cm\n$navigationInstruction"
+            currentLocation = "Lokasi saat ini: Marker ${currentStep.node}\n$currentDescription",
+            nextMarker = "Marker selanjutnya: ${nextStep.node}",
+            direction = "Arah: $direction",
+            distance = "Jarak: ${remainingDistance.toInt()} cm\n$navigationInstruction"
         )}
 
         if (navigationManager.isCloseToMarker()) {
             updateState { it.copy(
-                direction = "You are close to the marker. Please scan for the next marker."
+                direction = "Anda berada dekat dengan marker. Tolong scan marker selanjutnya"
             )}
         }
     }
@@ -140,10 +140,10 @@ class NavigationService (
 
         updateState { it.copy(
             isNavigating = true,
-            currentLocation = "Current Location: Marker ${currentStep.node}\n$currentDescription",
-            nextMarker = "Next Marker: ${nextStep.node}",
-            direction = "Direction: Waiting for distance and angle input",
-            distance = "Distance: Waiting for input"
+            currentLocation = "Lokasi saat ini: Marker ${currentStep.node}\n$currentDescription",
+            nextMarker = "Marker selanjutnya: ${nextStep.node}",
+            direction = "Arah: Menunggu input jarak dan sudut",
+            distance = "Jarak: Menunggu input"
         )}
     }
 
@@ -151,9 +151,9 @@ class NavigationService (
         return try {
             val response = RetrofitClient.apiService.getArucoMarker(markerId)
             if (response.isSuccessful) {
-                response.body()?.description ?: "No description available"
+                response.body()?.description ?: "Tidak ada deskripsi"
             } else {
-                "Error fetching marker description"
+                "Error fetching deskripsi marker"
             }
         } catch (e: Exception) {
             "Error: ${e.message}"

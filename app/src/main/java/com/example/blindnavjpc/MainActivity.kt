@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
                 navigationService.updateLocation(markerId)
                 // If navigation is complete, go back to main screen
                 if (!navigationService.isNavigating()) {
-                    TTSManager.speak("Anda telah tiba di tujuan")
+                    TTSManager.speak("Anda telah tiba di lokasi tujuan")
                     // Reset navigation state
                     currentDestination = null
                 }
@@ -114,7 +114,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             val success = navigationService.startNavigation(fromId, toId)
             if (!success) {
-                TTSManager.speak("Failed to start navigation")
+                TTSManager.speak("Gagal untuk memulai navigasi")
                 currentDestination = null
             }
         }

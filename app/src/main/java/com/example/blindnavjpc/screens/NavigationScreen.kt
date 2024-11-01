@@ -123,7 +123,7 @@ fun NavigationScreen(navigationState: NavigationState,
                         val angleValue = angle.toFloatOrNull()
                         if (distanceValue != null && angleValue != null) {
                             onPositionUpdate(distanceValue, angleValue)
-                            TTSManager.speak("Posisi diperbarui dengan jarak ${distanceValue} meter dan sudut ${angleValue} derajat.")
+//                            TTSManager.speak("Posisi diperbarui dengan jarak ${distanceValue} meter dan sudut ${angleValue} derajat.")
                         } else {
                             TTSManager.speak("Masukkan nilai jarak dan sudut yang valid.")
                         }
