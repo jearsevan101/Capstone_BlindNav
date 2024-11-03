@@ -30,9 +30,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
+
+import com.example.blindnavjpc.CameraActivity
 import com.example.blindnavjpc.helpers.SearchBarHelper
 import com.example.blindnavjpc.helpers.TTSManager
 import kotlinx.coroutines.launch
+
 
 @Composable
 fun MainScreen(scannerHelper: ScannerHelper) {
@@ -90,20 +93,10 @@ fun MainScreen(scannerHelper: ScannerHelper) {
         "main" -> {
             MainMenu(
                 onScanClick = {
-                    TTSManager.speak("Scan QR dimulai, silakan arahkan kamera ke QR code. Untuk membatalkan proses ini silakan tekan button X di ujung kiri atas")
-                    scannerHelper.startScanning(
-                        onSuccess = {
-                            isQrScanned = true
-                            currentScreen = "main"
-                            TTSManager.speak("Scan berhasil. Silakan pilih lantai untuk memulai navigasi.")
-                        },
-                        onError = {
-                            TTSManager.speak("Terjadi kesalahan dalam pemindaian")
-                        },
-                        onCancelled = {
-                            TTSManager.speak("Pemindaian dibatalkan") // Stop any ongoing TTS
-                        }
-                    )
+                    // Launch the CameraActivity when "Scan QR" is clicked
+                    val intent = Intent(context, CameraActivity::class.java)
+                    context.startActivity(intent)
+                    isQrScanned = true // Update the state after scanning
                 },
                 onSelectFloorClick = {
                     currentScreen = "selectFloor"

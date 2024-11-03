@@ -1,0 +1,17 @@
+{
+  "installationFolder": "D:\\COLLEGE\\SEMESTER_7\\CAPSTONE_TETI\\Capstone_BlindNav_nanta\\OpenCV_4.9.0\\build\\intermediates\\prefab_package\\release\\prefab",
+  "gradlePath": ":OpenCV_4.9.0",
+  "packageInfo": {
+    "packageName": "OpenCV_4.9.0",
+    "packageSchemaVersion": 2,
+    "packageDependencies": [],
+    "modules": [
+      {
+        "moduleName": "opencv_jni_shared",
+        "moduleHeaders": "D:\\COLLEGE\\SEMESTER_7\\CAPSTONE_TETI\\Capstone_BlindNav_nanta\\OpenCV_4.9.0\\native\\jni\\include",
+        "moduleExportLibraries": [],
+        "abis": []
+      }
+    ]
+  }
+}
