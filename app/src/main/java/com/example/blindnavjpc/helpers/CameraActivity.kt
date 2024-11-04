@@ -24,8 +24,9 @@ import kotlin.math.atan2
 import org.opencv.calib3d.Calib3d
 import java.util.ArrayList
 
-class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListener2 {
 
+
+class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListener2 {
     private var PERMISSION_CAMERA = Manifest.permission.CAMERA
     private var REQUEST_CODE = 101
     private lateinit var cameraBridgeViewBase: CameraBridgeViewBase
@@ -33,6 +34,9 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
     private lateinit var arucoDetector: ArucoDetector
     private lateinit var dictionary: Dictionary
     private lateinit var detectorParams: DetectorParameters
+
+    private var onPositionUpdate: ((Float, Float) -> Unit)? = null
+    private var onIdUpdate:((Int)->Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setContentView(R.layout.open_camera)
@@ -87,6 +91,12 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
             return outputFrame
         }
         return null
+    }
+    fun setOnPositionUpdateCallback(callback: (Float, Float) -> Unit) {
+        onPositionUpdate = callback
+    }
+    fun setOnIDUpdateCallback(callback: (Int) -> Unit) {
+        onIdUpdate = callback
     }
 
     private fun detectArucoMarkers(grayFrame: Mat, outputFrame: Mat) {
@@ -149,6 +159,9 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
 
                 val markerId = markerIds.get(i, 0)[0].toInt() // Get the ID of the marker
                 val topLeftCorner = Point(cornersData[0].toDouble(), cornersData[1].toDouble()) // First point (x, y)
+
+                //Update ID
+                onIdUpdate?.invoke(markerId)
 
                 // Draw the text "ID: x" on the output frame near the top-left corner of the marker
                 Imgproc.putText(
@@ -239,6 +252,10 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
                         adjustedYaw >= 225 && adjustedYaw < 315 -> "West"
                         else -> "Unknown"
                     }
+
+                    // Update the distance and angle
+                    onPositionUpdate?.invoke(distance.toFloat(), adjustedYaw.toFloat())
+
 
 
                     // Draw 3D XYZ axes to indicate orientation

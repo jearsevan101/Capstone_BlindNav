@@ -1,24 +1,31 @@
+
 package com.example.blindnavjpc.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.Composable
 import androidx.compose.material3.*
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.blindnavjpc.ui.theme.fontFamily
-import androidx.compose.ui.res.colorResource
-import com.example.blindnavjpc.R
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.blindnavjpc.R
 import com.example.blindnavjpc.helpers.TTSManager
+import com.example.blindnavjpc.ui.theme.fontFamily
+import com.example.blindnavjpc.dataconnection.*
+import kotlinx.coroutines.launch
+
+sealed class RoomsState {
+    data object Loading : RoomsState()
+    data class Success(val rooms: List<Rooms>) : RoomsState()
+    data class Error(val message: String) : RoomsState()
+}
 
 @Composable
 private fun FloorButton(
@@ -49,41 +56,34 @@ private fun FloorButton(
     }
 }
 
-@Composable
-private fun BackButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(bottom = 32.dp, start = 32.dp, end = 32.dp)
-            .semantics { contentDescription = "Kembali ke layar sebelumnya" },
-        shape = RoundedCornerShape(15.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = colorResource(id = R.color.tertiary),
-            contentColor = Color.White
-        ),
-        contentPadding = PaddingValues(vertical = 16.dp)
-    ) {
-        Text(
-            "Kembali",
-            fontSize = 24.sp,
-            fontFamily = fontFamily,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FloorSelectionScreen(
+    apiService: ApiService,
     onFloorSelected: (Int) -> Unit,
     onDiscardClick: () -> Unit
 ) {
+    var roomsState by remember { mutableStateOf<RoomsState>(RoomsState.Loading) }
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                val response = apiService.getRooms()
+                if (response.isSuccessful) {
+                    response.body()?.let { rooms ->
+                        roomsState = RoomsState.Success(rooms)
+                    } ?: run {
+                        roomsState = RoomsState.Error("Data kosong")
+                    }
+                } else {
+                    roomsState = RoomsState.Error("Gagal mengambil data: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                roomsState = RoomsState.Error("Terjadi kesalahan: ${e.message}")
+            }
+        }
+
         TTSManager.speak("Silakan pilih lantai yang ingin anda tuju.")
     }
 
@@ -111,33 +111,65 @@ fun FloorSelectionScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Using a range to create floor buttons dynamically
-                (1..3).forEach { floor ->
-                    FloorButton(
-                        floorNumber = floor,
-                        onClick = onFloorSelected
+            when (roomsState) {
+                is RoomsState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
                     )
+                }
+                is RoomsState.Error -> {
+                    Text(
+                        text = (roomsState as RoomsState.Error).message,
+                        color = Color.Red,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(16.dp)
+                    )
+                }
+                is RoomsState.Success -> {
+                    val uniqueFloors = (roomsState as RoomsState.Success)
+                        .rooms
+                        .map { it.floor }
+                        .distinct()
+                        .sorted()
+
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        uniqueFloors.forEach { floor ->
+                            FloorButton(
+                                floorNumber = floor,
+                                onClick = onFloorSelected
+                            )
+                        }
+                    }
                 }
             }
 
-            BackButton(
+            Button(
                 onClick = onDiscardClick,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp, start = 32.dp, end = 32.dp)
+                    .semantics { contentDescription = "Kembali ke layar sebelumnya" },
+                shape = RoundedCornerShape(15.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorResource(id = R.color.tertiary),
+                    contentColor = Color.White
+                ),
+                contentPadding = PaddingValues(vertical = 16.dp)
+            ) {
+                Text(
+                    "Kembali",
+                    fontSize = 24.sp,
+                    fontFamily = fontFamily,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewFloorSelectionScreen() {
-    FloorSelectionScreen(
-        onFloorSelected = {},
-        onDiscardClick = {}
-    )
-}

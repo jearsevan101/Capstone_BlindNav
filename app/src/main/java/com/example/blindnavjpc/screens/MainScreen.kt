@@ -30,24 +30,54 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
-
-import com.example.blindnavjpc.CameraActivity
+import com.example.blindnavjpc.dataconnection.ApiService
 import com.example.blindnavjpc.helpers.SearchBarHelper
 import com.example.blindnavjpc.helpers.TTSManager
 import kotlinx.coroutines.launch
-
-
+import com.example.blindnavjpc.dataconnection.NavigationState
+import com.example.blindnavjpc.CameraActivity
+import com.example.blindnavjpc.dataconnection.MarkerViewModel
+//import com.example.blindnavjpc.helpers.ContextExtensions
 @Composable
-fun MainScreen(scannerHelper: ScannerHelper) {
+fun MainScreen(
+    navigationState: NavigationState,
+    onDestinationSelected: (currentId: Int, destinationId: Int) -> Unit,
+    onDistanceAngleUpdated: (currentId: Int, distance: Float, angle: Float) -> Unit,
+    apiService: ApiService
+) {
     var currentScreen by remember { mutableStateOf("main") }
     var selectedFloor by remember { mutableIntStateOf(1) }
     var selectedCategory by remember { mutableStateOf("") }
     var selectedRoom by remember { mutableStateOf("") }
+    var selectedRoomID by remember { mutableIntStateOf(1) }
+    var currentArucoID by remember { mutableIntStateOf(1) }
     var isQrScanned by remember { mutableStateOf(false) }
+    var isScannerActive by remember { mutableStateOf(false) }
+    var isSearching by remember { mutableStateOf(false) }
+
 
     val context = LocalContext.current
-    val searchBarHelper = remember { SearchBarHelper(context) }
     val coroutineScope = rememberCoroutineScope()
+    val searchBarHelper = remember {
+        SearchBarHelper(
+            context = context,
+            apiService = apiService,
+            coroutineScope = coroutineScope
+        )
+    }
+    var distance by remember { mutableStateOf(0f) }
+    var angle by remember { mutableStateOf(0f) }
+
+    // Define the onPositionUpdate function
+    val onPositionUpdate: (Float, Float) -> Unit = { newDistance, newAngle ->
+        distance = newDistance
+        angle = newAngle
+        onDistanceAngleUpdated(currentArucoID, distance, angle)
+        // Do additional processing if needed
+    }
+    // Set the onPositionUpdate callback in the CameraActivity
+//    val cameraActivity = LocalContext.current.findViewTreeCameraActivity() ?: return
+//    cameraActivity.setOnPositionUpdateCallback(onPositionUpdate)
 
     val voiceLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -61,8 +91,8 @@ fun MainScreen(scannerHelper: ScannerHelper) {
                     onRoomFound = { roomInfo ->
                         selectedFloor = roomInfo.floor
                         selectedCategory = roomInfo.category
-                        selectedRoom = roomInfo.name
-                        val roomDetails = "Menuju ke ${roomInfo.name}, terletak di lantai ${roomInfo.floor} kategori ${roomInfo.category}."
+                        selectedRoom = roomInfo.roomName
+                        val roomDetails = "Menuju ke ${roomInfo.roomName}, terletak di lantai ${roomInfo.floor} kategori ${roomInfo.category}."
                         TTSManager.speak(roomDetails)
 
                         coroutineScope.launch {
@@ -70,8 +100,12 @@ fun MainScreen(scannerHelper: ScannerHelper) {
                             currentScreen = "navigation"
                         }
                     },
-                    onSearchError = {
-                        // Handle search error
+                    onSearchError = { errorMessage ->
+                        // Handle the error message
+                        TTSManager.speak(errorMessage)
+                    },
+                    onSearchStarted = {
+                        isSearching = true
                     }
                 )
             }
@@ -80,7 +114,6 @@ fun MainScreen(scannerHelper: ScannerHelper) {
 
     LaunchedEffect(currentScreen) {
         if (currentScreen == "main") {
-            // Modify the TTS message based on whether QR has been scanned
             if (!isQrScanned) {
                 TTSManager.speak("Anda berada di halaman Home. Untuk mengetahui informasi gedung, silakan scan QR terlebih dahulu. Setelah itu, untuk memulai navigasi silakan tekan tombol Pilih Lantai. Namun, jika anda sudah familiar dengan gedung ini, anda dapat menggunakan fitur mencari ruang dengan suara.")
             } else {
@@ -93,7 +126,8 @@ fun MainScreen(scannerHelper: ScannerHelper) {
         "main" -> {
             MainMenu(
                 onScanClick = {
-                    // Launch the CameraActivity when "Scan QR" is clicked
+                    TTSManager.speak("Scan QR dimulai, silakan arahkan kamera ke QR code. Untuk membatalkan proses ini silakan tekan button X di ujung kiri atas")
+                    isScannerActive = true
                     val intent = Intent(context, CameraActivity::class.java)
                     context.startActivity(intent)
                     isQrScanned = true // Update the state after scanning
@@ -119,7 +153,8 @@ fun MainScreen(scannerHelper: ScannerHelper) {
                 },
                 onDiscardClick = {
                     currentScreen = "main"
-                }
+                },
+                apiService = apiService
             )
         }
         "categorySelection" -> {
@@ -131,7 +166,8 @@ fun MainScreen(scannerHelper: ScannerHelper) {
                 },
                 onDiscardClick = {
                     currentScreen = "selectFloor"
-                }
+                },
+                apiService = apiService,
             )
         }
         "roomSelection" -> {
@@ -139,18 +175,25 @@ fun MainScreen(scannerHelper: ScannerHelper) {
                 floor = selectedFloor,
                 category = selectedCategory,
                 onRoomSelected = { room ->
-                    selectedRoom = room
+                    selectedRoom = room.name
+                    selectedRoomID = room.id
+                    onDestinationSelected(currentArucoID,selectedRoomID)
                     currentScreen = "navigation"
                 },
                 onBackClick = {
                     currentScreen = "categorySelection"
-                }
+                },
+                apiService = apiService
             )
         }
         "navigation" -> {
             NavigationScreen(
+                navigationState = navigationState,
                 onDiscardClick = { currentScreen = "roomSelection" },
-                onBackToHomeClick = { currentScreen = "main" }
+                onBackToHomeClick = { currentScreen = "main" },
+                onScanClick = {
+
+                },
             )
         }
     }
@@ -164,6 +207,7 @@ fun MainMenu(
     onVoiceSearchClick: () -> Unit,
     isQrScanned: Boolean
 ) {
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -286,4 +330,5 @@ fun PreviewMainMenu() {
         onVoiceSearchClick = {},
         isQrScanned = false  // Preview with QR not scanned
     )
+
 }
