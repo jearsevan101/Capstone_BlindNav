@@ -30,11 +30,12 @@ class NavigationService (
 
     private var fromId: Int? = null
     private var toId: Int? = null
+    private var currentArucoId: Int = 0
+    private var currentAngle: Float = 0f
 
     init {
         loadGraphData()
     }
-
     private fun loadGraphData() {
         coroutineScope.launch {
             try {
@@ -60,17 +61,22 @@ class NavigationService (
 
     suspend fun startNavigation(fromMarkerId: Int, toMarkerId: Int): Boolean {
         fromId = fromMarkerId
-        toId = toMarkerId
+        if (toId == null) {  // Only assign if toId is not already set
+            toId = toMarkerId
+        }
 
         try {
+            loadGraphData()
             val path = graph.findShortestPath(fromMarkerId, toMarkerId)
             if (path == null) {
                 updateState { it.copy(error = "No path found between markers") }
                 return false
             }
 
-            navigationManager.setRoute(path)
-            updateNavigationDisplay()
+            if (path != null) {
+                navigationManager.setRoute(path)
+            }
+//            updateNavigationDisplay()
             return true
         } catch (e: Exception) {
             updateState { it.copy(error = "Error: ${e.message}") }
@@ -80,9 +86,16 @@ class NavigationService (
 
     suspend fun updateLocation(currentMarkerId: Int) {
         val currentStep = navigationManager.getCurrentStep()
-        val nextStep = navigationManager.getNextStep()
+        val nextStep = navigationManager.getNextStep() ?: return
 
         if (nextStep == null) {
+            updateState { it.copy(
+                isNavigating = false,
+                direction = "Navigasi Selesai!"
+            )}
+            return
+        }
+        if (nextStep.node == toId){
             updateState { it.copy(
                 isNavigating = false,
                 direction = "Navigasi Selesai!"
@@ -92,29 +105,38 @@ class NavigationService (
 
         if (currentMarkerId == nextStep.node) {
             navigationManager.moveToNextStep()
-            updateNavigationDisplay()
-        } else {
+//            updateNavigationDisplay()
+        }
+        else {
             // Recalculate route from current position
-            toId?.let { startNavigation(currentMarkerId, it) }
+//            toId?.let { startNavigation(currentMarkerId, it) }
+            if (currentStep != null) {
+                if (currentMarkerId != currentStep.node){
+                    startNavigation(currentMarkerId, toId ?: return)
+
+                }
+            }
         }
     }
 
     suspend fun updatePositionInfo(update: NavigationUpdate) {
+        val nextStep = navigationManager.getNextStep() ?: return
         navigationManager.updateCurrentPosition(update.distance, update.angle)
 
-        val nextStep = navigationManager.getNextStep() ?: return
         val currentStep = navigationManager.getCurrentStep() ?: return
-
+        currentArucoId = update.currentMarkerId
+        currentAngle = update.angle
         val currentDescription = fetchMarkerDescription(currentStep.node)
         val remainingDistance = navigationManager.getRemainingDistance()
         val direction = navigationManager.getDirection(nextStep.angle)
-        val navigationInstruction = navigationManager.getNavigationInstruction(nextStep.angle)
+//        val navigationInstruction = navigationManager.getNavigationInstruction(nextStep.angle)
+        val navigationInstruction = if (nextStep.node == toId) navigationManager.getNavigationInstruction(graph.getAngleToNextMarker(currentStep.node, nextStep.node ))+   " selanjutnya anda tiba di depan  ruangan yang dituju " else navigationManager.getNavigationInstruction(graph.getAngleToNextMarker(currentStep.node, nextStep.node ))
 
         updateState { it.copy(
             currentLocation = "Lokasi saat ini: Marker ${currentStep.node}\n$currentDescription",
             nextMarker = "Marker selanjutnya: ${nextStep.node}",
             direction = "Arah: $direction",
-            distance = "Jarak: ${remainingDistance.toInt()} cm\n$navigationInstruction"
+            distance = "$navigationInstruction"
         )}
 
         if (navigationManager.isCloseToMarker()) {
@@ -124,28 +146,28 @@ class NavigationService (
         }
     }
 
-    private suspend fun updateNavigationDisplay() {
-        val currentStep = navigationManager.getCurrentStep() ?: return
-        val nextStep = navigationManager.getNextStep()
-
-        if (nextStep == null) {
-            updateState { it.copy(
-                isNavigating = false,
-                direction = "Kamu telah sampai di lokasi tujuanmu!"
-            )}
-            return
-        }
-
-        val currentDescription = fetchMarkerDescription(currentStep.node)
-
-        updateState { it.copy(
-            isNavigating = true,
-            currentLocation = "Lokasi saat ini: Marker ${currentStep.node}\n$currentDescription",
-            nextMarker = "Marker selanjutnya: ${nextStep.node}",
-            direction = "",
-            distance = ""
-        )}
-    }
+//    private suspend fun updateNavigationDisplay() {
+//        val currentStep = navigationManager.getCurrentStep() ?: return
+//        val nextStep = navigationManager.getNextStep()
+//
+//        if (nextStep == null) {
+//            updateState { it.copy(
+//                isNavigating = false,
+//                direction = "Kamu telah sampai di lokasi tujuanmu!"
+//            )}
+//            return
+//        }
+//
+//        val currentDescription = fetchMarkerDescription(currentStep.node)
+//
+//        updateState { it.copy(
+//            isNavigating = true,
+//            currentLocation = "Lokasi saat ini: Marker ${currentStep.node}\n$currentDescription",
+//            nextMarker = "Marker selanjutnya: ${nextStep.node} marker aruco saat ini ${currentArucoId}",
+//            direction = "sudut tujuan: ${nextStep.angle} sudut saat ini ${currentAngle}",
+//            distance = "Current step: ${currentStep} next step ${nextStep} "
+//        )}
+//    }
 
     private suspend fun fetchMarkerDescription(markerId: Int): String {
         return try {

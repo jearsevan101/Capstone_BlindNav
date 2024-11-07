@@ -23,6 +23,7 @@ import com.example.blindnavjpc.ui.theme.fontFamily
 
 data class Room(
     val id: Int,
+    val arucoId: Int,
     val number: String,
     val name: String,
     val fullName: String
@@ -47,14 +48,23 @@ fun RoomSelectionScreen(
     LaunchedEffect(Unit) {
         try {
             val response = apiService.getRooms()
-            if (response.isSuccessful) {
+            val markersResponse = apiService.getAllArucoMarkers() // Fetch markers data
+            if (response.isSuccessful && markersResponse.isSuccessful) {
                 val allRooms = response.body() ?: emptyList()
+                val allMarkers = markersResponse.body() ?: emptyList()
                 // Filter rooms based on floor and category
                 rooms = allRooms
                     .filter { it.floor == floor && it.room_type == category }
                     .map { room ->
+                        val matchingMarker = allMarkers.firstOrNull { marker ->
+                            marker.west_room_id == room.room_id ||
+                                    marker.east_room_id == room.room_id ||
+                                    marker.north_room_id == room.room_id ||
+                                    marker.south_room_id == room.room_id
+                        }
                         Room(
                             id = room.room_id,
+                            arucoId = matchingMarker?.marker_id ?: 0, // Assign marker_id or 0 if not found
                             number = room.room_number,
                             name = room.room_name,
                             fullName = "${room.room_number}: ${room.room_name}"

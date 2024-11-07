@@ -1,4 +1,5 @@
 package com.example.blindnavjpc.dataconnection
+import com.example.blindnavjpc.helpers.TTSManager
 import kotlin.math.abs
 
 data class NavigationStep(
@@ -50,16 +51,28 @@ class NavigationManager {
     }
 
     fun getRequiredTurn(targetAngle: Float): String {
-        val angleDiff = (targetAngle - currentAngle + 360) % 360
+//        val angleDiff = (targetAngle - currentAngle + 360) % 360
+        val angleDiff = (targetAngle - currentAngle)
+//        TTSManager.speak("Target sudut $targetAngle   sudut saat ini $currentAngle     perbandingan sudut  $angleDiff ")
+
         return when {
-            angleDiff <= 10 || angleDiff >= 350 -> "Terus Maju Kedepan"
-            angleDiff < 180 -> "Belok kanan ${angleDiff.toInt()} derajat"
-            else -> "Belok Kiri ${(360 - angleDiff).toInt()} derajat"
+            -180 <= angleDiff && angleDiff < -135  -> "Putar arah ke Kiri"
+            -135 <= angleDiff && angleDiff < -45  -> "Belok Kiri sejauh ${abs(angleDiff.toInt())} derajat"
+            -45 <= angleDiff && angleDiff < 45  -> "Maju Terus Ke depan"
+            45 <= angleDiff && angleDiff < 135   -> "Belok Kanan sejauh ${abs(angleDiff.toInt())} derajat"
+//            -180 <= angleDiff && angleDiff < -135  -> "Putar arah ke Kiri"
+//            -135 <= angleDiff &&angleDiff < -45  -> "Belok Kiri, arah saat ini $currentAngle derajat dengan target angle $targetAngle perbedaan sudutnya $angleDiff"
+//            -45 <= angleDiff &&angleDiff < 45  -> "Maju Terus Ke depan, arah saat ini $currentAngle derajat dengan target angle $targetAngle perbedaan sudutnya $angleDiff"
+//            45 <= angleDiff &&angleDiff < 135   -> "Belok Kanan, arah saat ini $currentAngle derajat dengan target angle $targetAngle perbedaan sudutnya $angleDiff"
+            else   -> "Putar Arah ke kanan "
+//            angleDiff <= 10 || angleDiff >= 350 -> "Maju Terus Kedepan"
+//            angleDiff < 180 -> "Belok kanan ${angleDiff.toInt()} derajat"
+//            else -> "Belok kiri ${(360 - angleDiff).toInt()} derajat"
         }
     }
 
     fun isCloseToMarker(): Boolean {
-        return currentDistance <= 50 // 50cm threshold
+        return currentDistance <= 20 // 20cm threshold
     }
 
     fun getNavigationInstruction(targetAngle: Float): String {
@@ -111,6 +124,7 @@ class NavigationManager {
     private fun calculateAngleDifference(angle1: Float, angle2: Float): Float {
         val diff = abs((angle2 - angle1 + 180) % 360 - 180)
         return if (angle1 > angle2) -diff else diff
+//        return diff
     }
 
     private fun getCardinalDirection(angle: Float): String {

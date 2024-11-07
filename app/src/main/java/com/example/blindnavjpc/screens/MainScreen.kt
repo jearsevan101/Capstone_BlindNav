@@ -118,16 +118,16 @@ fun MainScreen(
                     currentArucoID = markerId
                     currentDistance = Math.round(distance * 100*100) / 100f // Convert to cm
                     currentAngle = Math.round(angle * 100) / 100f;
+                    isQrScanned = true
 
-                    onDistanceAngleUpdated(currentArucoID, currentDistance, currentAngle)
-//                    TTSManager.speak("Scanned Marker ID: $currentArucoID")
+//                    TTSManager.speak("Scanned Marker ID: $currentArucoID jarak $currentDistance sudut $currentAngle")
                     if (isNavigationMode == false){
 //                        TTSManager.speak("Anda berada di ${navigationState.currentLocation} Silahkan maju ke depan sejauh ${currentDistance.toInt()} sentimeter")
 //                        CameraActivity.stopCamera()
-                        TTSManager.speak("Silahkan maju ke depan sejauh ${currentDistance.toInt()} sentimeter")
-                        isQrScanned = true
+                        TTSManager.speak("Silahkan maju ke depan sejauh ${currentDistance.toInt()} centimeter, selanjutnya silahkan pilih ruangan yang ingin dituju")
                         currentScreen = "main"
-
+                    }else {
+                        onDistanceAngleUpdated(currentArucoID, currentDistance, currentAngle)
                     }
                 }
             }
@@ -201,10 +201,10 @@ fun MainScreen(
                     val intent = Intent(context, CameraActivity::class.java)
                     cameraLauncher.launch(intent)
 
-                    if (isQrScanned == true){
-//                        isScannerActive = false
-                        currentScreen = "main"
-                    }
+//                    if (isQrScanned == true){
+////                        isScannerActive = false
+//                        currentScreen = "main"
+//                    }
                 },
                 onSelectFloorClick = {
                     currentScreen = "selectFloor"
@@ -250,7 +250,7 @@ fun MainScreen(
                 category = selectedCategory,
                 onRoomSelected = { room ->
                     selectedRoom = room.name
-                    selectedRoomID = room.id
+                    selectedRoomID = room.arucoId
                     onDestinationSelected(currentArucoID,selectedRoomID)
                     currentScreen = "navigation"
                 },

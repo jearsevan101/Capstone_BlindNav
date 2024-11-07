@@ -44,8 +44,7 @@ fun NavigationScreen(navigationState: NavigationState,
     LaunchedEffect(Unit) {
         TTSManager.speak(
             "Navigasi akan dimulai. Scanner akan terus aktif untuk mendeteksi marker. " +
-                    "Untuk kembali ke layar sebelumnya, silakan tekan tombol 'kembali' di kiri bawah. " +
-                    "Untuk kembali ke layar awal, silakan klik tombol 'home' di sebelah kanan bawah."
+                    "Anda dapat kembali ke layar sebelumnya atau ke layar awal dengan menekan tombol 'kembali' di kiri bawah dan 'home' di kanan bawah. "
         )
         // Start continuous scanning immediately
         delay(Duration.ofMillis(10000))

@@ -19,6 +19,12 @@ class Graph {
         adjacencyList.getOrPut(toNode) { mutableListOf() }
             .add(Edge(fromNode, distance, reverseAngle))
     }
+    fun getAngleToNextMarker(currentMarkerId: Int, nextMarkerId: Int): Float {
+        // Look up the angle from the current marker to the next marker in the graph
+        val edge = adjacencyList[currentMarkerId]?.find { it.toNode == nextMarkerId }
+        return edge?.angle ?: 0f
+    }
+
 
     fun findShortestPath(start: Int, end: Int): List<PathNode>? {
         val distances = mutableMapOf<Int, Float>()

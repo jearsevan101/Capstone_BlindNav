@@ -44,12 +44,12 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
     private lateinit var dictionary: Dictionary
     private lateinit var detectorParams: DetectorParameters
 //    private val detectedMarkers = mutableSetOf<Int>()
-    val isOneScan: Boolean = false
-    private var prevDistance: Float = -1f
-    private var prevAngle: Float = -1f
-    private val DISTANCE_THRESHOLD = 0.75f // 25cm threshold
-    private val ANGLE_THRESHOLD = 45f // 10 degrees threshold
-    private var isFirstDetection = true
+//    val isOneScan: Boolean = false
+//    private var prevDistance: Float = -1f
+//    private var prevAngle: Float = -1f
+    private val DISTANCE_THRESHOLD = 0.4f // 25cm threshold
+//    private val ANGLE_THRESHOLD = 25f // 10 degrees threshold
+//    private var isFirstDetection = true
     private val detectedMarkers = mutableMapOf<Int, Pair<Float, Float>>() // Store previous values for each marker
     private lateinit var localBroadcastManager: LocalBroadcastManager
 
@@ -92,17 +92,17 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
         detectorParams = DetectorParameters()
         arucoDetector = ArucoDetector(dictionary, detectorParams)
     }
-    private fun returnDetectedMarker(markerId: Int, distance: Float, angle: Float) {
-        val returnIntent = Intent()
-        returnIntent.putExtra("MARKER_ID", markerId.toString())
-        returnIntent.putExtra("DISTANCE", distance.toString())
-        returnIntent.putExtra("ANGLE", angle.toString())
-//        TTSManager.speak("marker id camera activity : ${markerId}")
-
-        setResult(Activity.RESULT_OK, returnIntent)
-        finish() // Close CameraActivit
-
-    }
+//    private fun returnDetectedMarker(markerId: Int, distance: Float, angle: Float) {
+//        val returnIntent = Intent()
+//        returnIntent.putExtra("MARKER_ID", markerId.toString())
+//        returnIntent.putExtra("DISTANCE", distance.toString())
+//        returnIntent.putExtra("ANGLE", angle.toString())
+////        TTSManager.speak("marker id camera activity : ${markerId}")
+//
+//        setResult(Activity.RESULT_OK, returnIntent)
+//        finish() // Close CameraActivit
+//
+//    }
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (grantResults.isNotEmpty() && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
@@ -139,23 +139,17 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
         }
         localBroadcastManager.sendBroadcast(intent)
     }
-    private fun shouldUpdateMarker(markerId: Int, currentDistance: Float, currentAngle: Float): Boolean {
+    private fun shouldUpdateMarker(markerId: Int, currentDistance: Float): Boolean {
         if (!detectedMarkers.containsKey(markerId)) {
             return true // First detection of this marker
         }
 
-        val (prevDistance, prevAngle) = detectedMarkers[markerId]!!
+        val (prevDistance) = detectedMarkers[markerId]!!
 
         // Calculate absolute differences
         val distanceDiff = Math.abs(currentDistance - prevDistance)
-        var angleDiff = Math.abs(currentAngle - prevAngle)
 
-        // Handle angle wrapping around 360 degrees
-        if (angleDiff > 180) {
-            angleDiff = 360 - angleDiff
-        }
-
-        return distanceDiff >= DISTANCE_THRESHOLD || angleDiff >= ANGLE_THRESHOLD
+        return distanceDiff >= DISTANCE_THRESHOLD
     }
     fun stopCamera() {
         finish() // This stops the camera feed
@@ -304,7 +298,7 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
                     val adjustedYaw = (yawDeg + 360 -90) % 360
 
                     // Check if we should broadcast an update for this marker
-                    if (shouldUpdateMarker(markerId, distance.toFloat(), adjustedYaw.toFloat())) {
+                    if (shouldUpdateMarker(markerId, distance.toFloat())) {
                         // Update stored values
                         detectedMarkers[markerId] = Pair(distance.toFloat(), adjustedYaw.toFloat())
                         // Broadcast the update instead of returning

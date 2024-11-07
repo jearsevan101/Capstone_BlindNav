@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
         // Start collecting navigation state updates
         lifecycleScope.launch {
             navigationService.navigationState.collect { state ->
-                // Announce navigation updates via TTS
+//                // Announce navigation updates via TTS
                 if (state.direction.isNotEmpty()) {
                     TTSManager.speak(state.direction)
                 }
@@ -81,23 +81,23 @@ class MainActivity : ComponentActivity() {
         updatePositionInfo(newCurrentId,newDistance,newAngle)
         // Do additional processing if needed
     }
-    private fun handleMarkerDetection(markerId: Int) {
-        lifecycleScope.launch {
-            if (navigationService.isNavigating()) {
-                navigationService.updateLocation(markerId)
-                // If navigation is complete, go back to main screen
-                if (!navigationService.isNavigating()) {
-                    TTSManager.speak("Anda telah tiba di lokasi tujuan")
-                    // Reset navigation state
-                    currentDestination = null
-                }
-            } else {
-                currentDestination?.let { destinationId ->
-                    startNavigation(markerId, destinationId)
-                }
-            }
-        }
-    }
+//    private fun handleMarkerDetection(markerId: Int) {
+//        lifecycleScope.launch {
+//            if (navigationService.isNavigating()) {
+//                navigationService.updateLocation(markerId)
+//                // If navigation is complete, go back to main screen
+//                if (!navigationService.isNavigating()) {
+//                    TTSManager.speak("Anda telah tiba di lokasi tujuan")
+//                    // Reset navigation state
+//                    currentDestination = null
+//                }
+//            } else {
+//                currentDestination?.let { destinationId ->
+//                    startNavigation(markerId, destinationId)
+//                }
+//            }
+//        }
+//    }
 
     private fun startNavigation(fromId: Int, toId: Int) {
         lifecycleScope.launch {
@@ -112,6 +112,9 @@ class MainActivity : ComponentActivity() {
     // Call this method when you receive distance and angle updates
     private fun updatePositionInfo(markerId: Int, distance: Float, angle: Float) {
         lifecycleScope.launch {
+            navigationService.updateLocation(
+                markerId
+            )
             navigationService.updatePositionInfo(
                 NavigationUpdate(
                     currentMarkerId = markerId,
