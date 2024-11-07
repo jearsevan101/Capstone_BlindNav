@@ -48,7 +48,7 @@ fun NavigationScreen(navigationState: NavigationState,
                     "Untuk kembali ke layar awal, silakan klik tombol 'home' di sebelah kanan bawah."
         )
         // Start continuous scanning immediately
-        delay(Duration.ofMillis(8000))
+        delay(Duration.ofMillis(10000))
         onScanClick()
     }
 
@@ -117,28 +117,28 @@ fun NavigationScreen(navigationState: NavigationState,
                     )
                 }
 
-                if (navigationState.isNavigating) {
-                    Text(
-                        text = navigationState.currentLocation,
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = navigationState.nextMarker,
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "Arah: ${navigationState.direction}",
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "Jarak: ${navigationState.distance}",
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
+//                if (navigationState.isNavigating) {
+//                    Text(
+//                        text = navigationState.currentLocation,
+//                        modifier = Modifier.padding(16.dp),
+//                        textAlign = TextAlign.Center
+//                    )
+//                    Text(
+//                        text = navigationState.nextMarker,
+//                        modifier = Modifier.padding(16.dp),
+//                        textAlign = TextAlign.Center
+//                    )
+//                    Text(
+//                        text = "Arah: ${navigationState.direction}",
+//                        modifier = Modifier.padding(16.dp),
+//                        textAlign = TextAlign.Center
+//                    )
+//                    Text(
+//                        text = "Jarak: ${navigationState.distance}",
+//                        modifier = Modifier.padding(16.dp),
+//                        textAlign = TextAlign.Center
+//                    )
+//                }
             }
 
             // Bottom navigation buttons
@@ -187,6 +187,7 @@ fun NavigationScreen(navigationState: NavigationState,
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun PreviewNavigationScreen() {

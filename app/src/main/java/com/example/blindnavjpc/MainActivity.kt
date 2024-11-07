@@ -66,17 +66,18 @@ class MainActivity : ComponentActivity() {
                         navigationState = navigationState,
                         apiService = apiService,
                         onDestinationSelected = onDestinationUpdated,
-                        onDistanceAngleUpdated = onDistanceAngleUpdated
-
+                        onDistanceAngleUpdated = onDistanceAngleUpdated,
                     )
                 }
             }
         }
     }
     val onDestinationUpdated:(Int,Int) -> Unit = {newCurrentId, newDestinationId->
+        currentDestination = newDestinationId
         startNavigation(newCurrentId,newDestinationId)
     }
     val onDistanceAngleUpdated: (Int, Float, Float) -> Unit = { newCurrentId, newDistance, newAngle ->
+//        handleMarkerDetection(newCurrentId)
         updatePositionInfo(newCurrentId,newDistance,newAngle)
         // Do additional processing if needed
     }

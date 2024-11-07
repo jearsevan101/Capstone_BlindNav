@@ -3,8 +3,10 @@ package com.example.blindnavjpc
 import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -16,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.blindnavjpc.helpers.TTSManager
 import org.opencv.android.CameraActivity
 import org.opencv.android.CameraBridgeViewBase
@@ -44,20 +47,18 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
     val isOneScan: Boolean = false
     private var prevDistance: Float = -1f
     private var prevAngle: Float = -1f
-    private val DISTANCE_THRESHOLD = 0.25f // 25cm threshold
-    private val ANGLE_THRESHOLD = 10f // 10 degrees threshold
+    private val DISTANCE_THRESHOLD = 0.75f // 25cm threshold
+    private val ANGLE_THRESHOLD = 45f // 10 degrees threshold
     private var isFirstDetection = true
     private val detectedMarkers = mutableMapOf<Int, Pair<Float, Float>>() // Store previous values for each marker
-//    var onMarkerDetected: ((Int, Float, Float) -> Unit)? = null
-//
-//    fun onMarkerDetected(id: Int, distance: Float, angle: Float) {
-//        onMarkerDetected?.invoke(id, distance, angle)
-//    }
-//
-//
-//    public var onPositionUpdate: ((Float, Float) -> Unit)? = null
-//    public var onIdUpdate:((Int)->Unit)? = null
+    private lateinit var localBroadcastManager: LocalBroadcastManager
 
+    companion object {
+        const val MARKER_UPDATE_ACTION = "com.example.blindnavjpc.MARKER_UPDATE"
+        const val EXTRA_MARKER_ID = "MARKER_ID"
+        const val EXTRA_DISTANCE = "DISTANCE"
+        const val EXTRA_ANGLE = "ANGLE"
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         setContentView(R.layout.open_camera)
         super.onCreate(savedInstanceState)
@@ -69,12 +70,20 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
         cameraBridgeViewBase.setCameraPermissionGranted()
         cameraBridgeViewBase.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_ANY)
         cameraBridgeViewBase.visibility = SurfaceView.VISIBLE
-
+        localBroadcastManager = LocalBroadcastManager.getInstance(this)
         if (OpenCVLoader.initDebug()) {
             Log.d("OPENCV:APP", "Successful load of OpenCV")
             cameraBridgeViewBase.enableView()
             Toast.makeText(this, "OpenCV Loaded!", Toast.LENGTH_LONG).show()
             initAruco()
+        }
+        localBroadcastManager.registerReceiver(stopCameraReceiver, IntentFilter("STOP_CAMERA"))
+    }
+    val stopCameraReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == "STOP_CAMERA") {
+                stopCamera()
+            }
         }
     }
 
@@ -122,21 +131,14 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
         }
         return null
     }
-//    fun updatePosition(x: Float, y: Float) {
-//        // Call the listener with the new position values
-//        onPositionUpdate?.invoke(x, y)
-//    }
-//
-//    fun updateId(id: Int) {
-//        // Call the listener with the new ID
-//        onIdUpdate?.invoke(id)
-//    }
-//    fun setOnPositionUpdateCallback(callback: (Float, Float) -> Unit) {
-//        onPositionUpdate = callback
-//    }
-//    fun setOnIDUpdateCallback(callback: (Int) -> Unit) {
-//        onIdUpdate = callback
-//    }
+    private fun broadcastMarkerUpdate(markerId: Int, distance: Float, angle: Float) {
+        val intent = Intent(MARKER_UPDATE_ACTION).apply {
+            putExtra(EXTRA_MARKER_ID, markerId.toString())
+            putExtra(EXTRA_DISTANCE, distance.toString())
+            putExtra(EXTRA_ANGLE, angle.toString())
+        }
+        localBroadcastManager.sendBroadcast(intent)
+    }
     private fun shouldUpdateMarker(markerId: Int, currentDistance: Float, currentAngle: Float): Boolean {
         if (!detectedMarkers.containsKey(markerId)) {
             return true // First detection of this marker
@@ -155,7 +157,9 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
 
         return distanceDiff >= DISTANCE_THRESHOLD || angleDiff >= ANGLE_THRESHOLD
     }
-
+    fun stopCamera() {
+        finish() // This stops the camera feed
+    }
     private fun detectArucoMarkers(grayFrame: Mat, outputFrame: Mat) {
         // Implementation for detecting ArUco markers (as provided in your original code)
 
@@ -165,7 +169,7 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
         val markerIds = Mat()
         val rejectedCandidates: MutableList<Mat> = ArrayList() // Correct type: MutableList<Mat>
 
-        val MARKER_SIZE = 0.05 //5cm
+        val MARKER_SIZE = 0.1 //10cm
         // Detect markers in the gray frame using the new ArucoDetector class
         arucoDetector.detectMarkers(grayFrame, markerCorners, markerIds, rejectedCandidates)
 
@@ -217,9 +221,6 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
                 val markerId = markerIds.get(i, 0)[0].toInt() // Get the ID of the marker
                 val topLeftCorner = Point(cornersData[0].toDouble(), cornersData[1].toDouble()) // First point (x, y)
 
-                //Update ID
-//                onIdUpdate?.invoke(markerId)
-//                updateId(markerId)
 
                 // Draw the text "ID: x" on the output frame near the top-left corner of the marker
                 Imgproc.putText(
@@ -302,12 +303,12 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
                     // Adjust yaw to be between 0° and 360°
                     val adjustedYaw = (yawDeg + 360 -90) % 360
 
-                    // Check if we should update for this marker
+                    // Check if we should broadcast an update for this marker
                     if (shouldUpdateMarker(markerId, distance.toFloat(), adjustedYaw.toFloat())) {
                         // Update stored values
                         detectedMarkers[markerId] = Pair(distance.toFloat(), adjustedYaw.toFloat())
-                        // Return the detected marker
-                        returnDetectedMarker(markerId, distance.toFloat(), adjustedYaw.toFloat())
+                        // Broadcast the update instead of returning
+                        broadcastMarkerUpdate(markerId, distance.toFloat(), adjustedYaw.toFloat())
                     }
                     // Determine cardinal direction based on yaw angle
                     val direction = when {
@@ -317,10 +318,6 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
                         adjustedYaw >= 225 && adjustedYaw < 315 -> "West"
                         else -> "Unknown"
                     }
-
-                    // Update the distance and angle
-//                    onPositionUpdate?.invoke(distance.toFloat(), adjustedYaw.toFloat())
-//                    updatePosition(distance.toFloat(),adjustedYaw.toFloat())
 
 
                     // Draw 3D XYZ axes to indicate orientation
@@ -397,6 +394,7 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
 
     override fun onDestroy() {
         cameraBridgeViewBase.disableView()
+        localBroadcastManager.unregisterReceiver(stopCameraReceiver)
         super.onDestroy()
     }
 }
