@@ -21,9 +21,11 @@ import com.example.blindnavjpc.R
 import com.example.blindnavjpc.helpers.ScannerHelper
 import com.example.blindnavjpc.ui.theme.fontFamily
 import android.content.Intent
+import android.os.Build
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.IconButton
@@ -36,8 +38,10 @@ import com.example.blindnavjpc.helpers.TTSManager
 import kotlinx.coroutines.launch
 import com.example.blindnavjpc.dataconnection.NavigationState
 import com.example.blindnavjpc.CameraActivity
-import com.example.blindnavjpc.dataconnection.MarkerViewModel
-//import com.example.blindnavjpc.helpers.ContextExtensions
+
+
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainScreen(
     navigationState: NavigationState,
@@ -51,10 +55,42 @@ fun MainScreen(
     var selectedRoom by remember { mutableStateOf("") }
     var selectedRoomID by remember { mutableIntStateOf(1) }
     var currentArucoID by remember { mutableIntStateOf(1) }
+    var currentDistance by remember { mutableFloatStateOf(1F) }
+    var currentAngle by remember { mutableFloatStateOf(1F) }
     var isQrScanned by remember { mutableStateOf(false) }
     var isScannerActive by remember { mutableStateOf(false) }
     var isSearching by remember { mutableStateOf(false) }
+    var isNavigationMode by remember { mutableStateOf(false) }
 
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // Get the marker ID from the result data
+            val markerId = result.data?.getStringExtra("MARKER_ID")
+            markerId?.let {
+                currentArucoID = markerId.toInt()
+            }
+            val distance = result.data?.getStringExtra("DISTANCE")
+            distance?.let {
+                currentDistance = distance.toFloat()*100
+            }
+            val angle = result.data?.getStringExtra("ANGLE")
+            angle?.let {
+                currentAngle = angle.toFloat()
+            }
+            onDistanceAngleUpdated(currentArucoID,currentDistance,currentAngle)
+
+            TTSManager.speak("Scanned Marker ID: ${currentArucoID}")
+//            TTSManager.speak("Scanned distance: ${currentDistance}")
+//            TTSManager.speak("Scanned current Angle: ${currentAngle}")
+            if (isNavigationMode == false){
+                currentScreen = "main"
+                isQrScanned = true
+            }
+        }
+    }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -65,19 +101,56 @@ fun MainScreen(
             coroutineScope = coroutineScope
         )
     }
-    var distance by remember { mutableStateOf(0f) }
-    var angle by remember { mutableStateOf(0f) }
 
-    // Define the onPositionUpdate function
-    val onPositionUpdate: (Float, Float) -> Unit = { newDistance, newAngle ->
-        distance = newDistance
-        angle = newAngle
-        onDistanceAngleUpdated(currentArucoID, distance, angle)
-        // Do additional processing if needed
-    }
+//    var distance by remember { mutableStateOf(0f) }
+//    var angle by remember { mutableStateOf(0f) }
+
+//    fun setupListeners(cameraActivity: CameraActivity) {
+//        cameraActivity.onPositionUpdate = { x, y ->
+//            println("Position updated: x=$x, y=$y")
+//            TTSManager.speak("Position di update")
+//            distance = x
+//            angle = y
+//            onDistanceAngleUpdated(currentArucoID,distance,angle)
+//        }
+
+//        cameraActivity.onIdUpdate = { id ->
+//            println("ID updated: id=$id")
+//            TTSManager.speak("id di update")
+//            currentArucoID = id
+//            isQrScanned = true // Update the state after scanning
+//        }
+//    }
+    // Callback for handling marker detection
+//    val onMarkerDetectedCallback: (Int, Float, Float) -> Unit = { id, newDistance, newAngle ->
+//        currentArucoID = id
+//        distance = newDistance
+//        angle = newAngle
+//        isQrScanned = true // Update state indicating that a QR code has been scanned
+//        onDistanceAngleUpdated(id, newDistance, newAngle)
+//    }
+//    // Define the onPositionUpdate function
+//    val onPositionUpdate: (Float, Float) -> Unit = { newDistance, newAngle ->
+//        distance = newDistance
+//        angle = newAngle
+//        onDistanceAngleUpdated(currentArucoID, distance, angle)
+//        // Do additional processing if needed
+//    }
+
+//    val cameraActivity = CameraActivity()  // Or however you get the instance
+//    setupListeners(cameraActivity)
     // Set the onPositionUpdate callback in the CameraActivity
 //    val cameraActivity = LocalContext.current.findViewTreeCameraActivity() ?: return
 //    cameraActivity.setOnPositionUpdateCallback(onPositionUpdate)
+//    fun startScannerActivity() {
+//        val intent = Intent(context, CameraActivity::class.java).apply {
+//            // Pass the listener callback to CameraActivity
+//            (context as? Activity)?.let { activity ->
+//                (activity as CameraActivity).onMarkerDetected = onMarkerDetectedCallback
+//            }
+//        }
+//        context.startActivity(intent)
+//    }
 
     val voiceLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -127,10 +200,17 @@ fun MainScreen(
             MainMenu(
                 onScanClick = {
                     TTSManager.speak("Scan QR dimulai, silakan arahkan kamera ke QR code. Untuk membatalkan proses ini silakan tekan button X di ujung kiri atas")
+                    isNavigationMode = false
                     isScannerActive = true
+
                     val intent = Intent(context, CameraActivity::class.java)
-                    context.startActivity(intent)
-                    isQrScanned = true // Update the state after scanning
+                    cameraLauncher.launch(intent)
+
+                    if (isQrScanned == true){
+                        isScannerActive = false
+                    }
+
+
                 },
                 onSelectFloorClick = {
                     currentScreen = "selectFloor"
@@ -192,7 +272,18 @@ fun MainScreen(
                 onDiscardClick = { currentScreen = "roomSelection" },
                 onBackToHomeClick = { currentScreen = "main" },
                 onScanClick = {
+                    isNavigationMode = true
+                    TTSManager.speak("Memulai pemindaian ArUco marker")
+                    isScannerActive = true
 
+                    val intent = Intent(context, CameraActivity::class.java)
+                    cameraLauncher.launch(intent)
+
+//                    if (isQrScanned == true){
+//                        TTSManager.speak("Masuk ke proses is qr scanned true")
+////                        currentScreen = "main"
+////                        isScannerActive = false
+//                    }
                 },
             )
         }

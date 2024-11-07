@@ -1,21 +1,18 @@
 package com.example.blindnavjpc
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.*
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
-import com.example.blindnavjpc.dataconnection.ApiService
 import com.example.blindnavjpc.dataconnection.NavigationService
 import com.example.blindnavjpc.dataconnection.NavigationUpdate
-import com.example.blindnavjpc.dataconnection.RetrofitClient
 import com.example.blindnavjpc.dataconnection.RetrofitClient.apiService
 import com.example.blindnavjpc.helpers.ScannerHelper
 import com.example.blindnavjpc.helpers.TTSManager
@@ -23,6 +20,7 @@ import com.example.blindnavjpc.screens.LaunchScreen
 import com.example.blindnavjpc.screens.MainScreen
 import com.example.blindnavjpc.ui.theme.BlindNavJPCTheme
 import kotlinx.coroutines.launch
+
 
 class MainActivity : ComponentActivity() {
     private lateinit var scannerHelper: ScannerHelper
@@ -69,6 +67,7 @@ class MainActivity : ComponentActivity() {
                         apiService = apiService,
                         onDestinationSelected = onDestinationUpdated,
                         onDistanceAngleUpdated = onDistanceAngleUpdated
+
                     )
                 }
             }

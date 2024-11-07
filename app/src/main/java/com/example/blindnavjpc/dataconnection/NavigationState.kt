@@ -142,8 +142,8 @@ class NavigationService (
             isNavigating = true,
             currentLocation = "Lokasi saat ini: Marker ${currentStep.node}\n$currentDescription",
             nextMarker = "Marker selanjutnya: ${nextStep.node}",
-            direction = "Arah: Menunggu input jarak dan sudut",
-            distance = "Jarak: Menunggu input"
+            direction = "",
+            distance = ""
         )}
     }
 

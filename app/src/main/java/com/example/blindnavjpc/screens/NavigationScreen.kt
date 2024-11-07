@@ -1,5 +1,6 @@
 package com.example.blindnavjpc.screens
 
+import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,7 +29,12 @@ import com.example.blindnavjpc.R
 import com.example.blindnavjpc.dataconnection.NavigationState
 import com.example.blindnavjpc.helpers.TTSManager
 import com.example.blindnavjpc.ui.theme.fontFamily
+import kotlinx.coroutines.time.delay
+import java.time.Duration
+import androidx.annotation.RequiresApi
 
+
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavigationScreen(navigationState: NavigationState,
@@ -38,11 +44,11 @@ fun NavigationScreen(navigationState: NavigationState,
     LaunchedEffect(Unit) {
         TTSManager.speak(
             "Navigasi akan dimulai. Scanner akan terus aktif untuk mendeteksi marker. " +
-                    "Masukkan jarak dan sudut untuk mendapatkan panduan yang tepat. " +
                     "Untuk kembali ke layar sebelumnya, silakan tekan tombol 'kembali' di kiri bawah. " +
                     "Untuk kembali ke layar awal, silakan klik tombol 'home' di sebelah kanan bawah."
         )
         // Start continuous scanning immediately
+        delay(Duration.ofMillis(8000))
         onScanClick()
     }
 
