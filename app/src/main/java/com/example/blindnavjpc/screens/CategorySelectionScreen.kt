@@ -36,26 +36,47 @@ fun CategorySelectionScreen(
     onDiscardClick: () -> Unit = {}
 ) {
     var roomsState by remember { mutableStateOf<RoomsState>(RoomsState.Loading) }
+    val scope = rememberCoroutineScope()
     var isTTSReady by remember { mutableStateOf(false) }
     var isTalkBackEnabled by remember { mutableStateOf(true) }
-    val scope = rememberCoroutineScope()
 
-    // Initialize TTS with a small delay to ensure readiness
+    // Inisialisasi delay untuk TTS
     LaunchedEffect(Unit) {
-        delay(2000)
+        delay(2000)  // Delay sebelum TTS dimulai
         isTTSReady = true
     }
 
-    // Play the introductory TTS message when ready
+    // Play TTS ketika siap
     LaunchedEffect(isTTSReady) {
         if (isTTSReady) {
-            // Temporarily disable TalkBack
+            // Menonaktifkan TalkBack sementara
             isTalkBackEnabled = false
             TTSManager.speak("Silakan pilih kategori ruangan di lantai $floor.") {
-                // Re-enable TalkBack after TTS finishes speaking
+                // Mengaktifkan TalkBack setelah TTS selesai
                 isTalkBackEnabled = true
             }
         }
+    }
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                val response = apiService.getRooms()
+                if (response.isSuccessful) {
+                    response.body()?.let { rooms ->
+                        roomsState = RoomsState.Success(rooms)
+                    } ?: run {
+                        roomsState = RoomsState.Error("Data kosong")
+                    }
+                } else {
+                    roomsState = RoomsState.Error("Gagal mengambil data: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                roomsState = RoomsState.Error("Terjadi kesalahan: ${e.message}")
+            }
+        }
+
+        TTSManager.speak("Silakan pilih kategori ruangan di lantai $floor.")
     }
 
     Scaffold(
@@ -98,6 +119,7 @@ fun CategorySelectionScreen(
                     )
                 }
                 is RoomsState.Success -> {
+                    // Get unique categories for the selected floor
                     val categories = (roomsState as RoomsState.Success)
                         .rooms
                         .filter { it.floor == floor }
@@ -113,9 +135,7 @@ fun CategorySelectionScreen(
                     ) {
                         categories.forEach { category ->
                             CategoryButton(category) {
-                                TTSManager.speak("Kategori $category dipilih") {
-                                    onCategorySelected(category)
-                                }
+                                onCategorySelected(category)
                             }
                         }
                     }

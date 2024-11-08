@@ -1,3 +1,3 @@
-D:/COLLEGE/SEMESTER_7/CAPSTONE_TETI/Capstone_BlindNav_nanta/OpenCV_4.9.0/.cxx/Debug/92e105r6/armeabi-v7a/CMakeFiles/opencv_jni_shared.dir
-D:/COLLEGE/SEMESTER_7/CAPSTONE_TETI/Capstone_BlindNav_nanta/OpenCV_4.9.0/.cxx/Debug/92e105r6/armeabi-v7a/CMakeFiles/edit_cache.dir
-D:/COLLEGE/SEMESTER_7/CAPSTONE_TETI/Capstone_BlindNav_nanta/OpenCV_4.9.0/.cxx/Debug/92e105r6/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+C:/Users/salma/Downloads/salma/Capstone_BlindNav/OpenCV_4.9.0/.cxx/Debug/92e105r6/armeabi-v7a/CMakeFiles/opencv_jni_shared.dir
+C:/Users/salma/Downloads/salma/Capstone_BlindNav/OpenCV_4.9.0/.cxx/Debug/92e105r6/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/salma/Downloads/salma/Capstone_BlindNav/OpenCV_4.9.0/.cxx/Debug/92e105r6/armeabi-v7a/CMakeFiles/rebuild_cache.dir

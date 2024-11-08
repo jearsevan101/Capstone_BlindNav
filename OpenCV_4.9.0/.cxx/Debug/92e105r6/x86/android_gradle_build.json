@@ -1,19 +1,19 @@
 {
   "buildFiles": [
-    "F:\\Capstone\\Nanta_integrated\\Capstone_BlindNav\\OpenCV_4.9.0\\libcxx_helper\\CMakeLists.txt"
+    "C:\\Users\\salma\\Downloads\\salma\\Capstone_BlindNav\\OpenCV_4.9.0\\libcxx_helper\\CMakeLists.txt"
   ],
   "cleanCommandsComponents": [
     [
-      "C:\\Users\\asus\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "C:\\Users\\salma\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
       "-C",
-      "F:\\Capstone\\Nanta_integrated\\Capstone_BlindNav\\OpenCV_4.9.0\\.cxx\\Debug\\92e105r6\\x86",
+      "C:\\Users\\salma\\Downloads\\salma\\Capstone_BlindNav\\OpenCV_4.9.0\\.cxx\\Debug\\92e105r6\\x86",
       "clean"
     ]
   ],
   "buildTargetsCommandComponents": [
-    "C:\\Users\\asus\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+    "C:\\Users\\salma\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
     "-C",
-    "F:\\Capstone\\Nanta_integrated\\Capstone_BlindNav\\OpenCV_4.9.0\\.cxx\\Debug\\92e105r6\\x86",
+    "C:\\Users\\salma\\Downloads\\salma\\Capstone_BlindNav\\OpenCV_4.9.0\\.cxx\\Debug\\92e105r6\\x86",
     "{LIST_OF_TARGETS_TO_BUILD}"
   ],
   "libraries": {
@@ -21,13 +21,13 @@
       "toolchain": "toolchain",
       "abi": "x86",
       "artifactName": "opencv_jni_shared",
-      "output": "F:\\Capstone\\Nanta_integrated\\Capstone_BlindNav\\OpenCV_4.9.0\\.cxx\\Debug\\92e105r6\\x86\\libopencv_jni_shared.a"
+      "output": "C:\\Users\\salma\\Downloads\\salma\\Capstone_BlindNav\\OpenCV_4.9.0\\.cxx\\Debug\\92e105r6\\x86\\libopencv_jni_shared.a"
     }
   },
   "toolchains": {
     "toolchain": {
-      "cCompilerExecutable": "C:\\Users\\asus\\AppData\\Local\\Android\\Sdk\\ndk\\26.1.10909125\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe",
-      "cppCompilerExecutable": "C:\\Users\\asus\\AppData\\Local\\Android\\Sdk\\ndk\\26.1.10909125\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe"
+      "cCompilerExecutable": "C:\\Users\\salma\\AppData\\Local\\Android\\Sdk\\ndk\\26.1.10909125\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe",
+      "cppCompilerExecutable": "C:\\Users\\salma\\AppData\\Local\\Android\\Sdk\\ndk\\26.1.10909125\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe"
     }
   },
   "cFileExtensions": [],

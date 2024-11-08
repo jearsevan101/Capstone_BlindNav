@@ -47,7 +47,7 @@ fun RoomSelectionScreen(
     // Fetch rooms and initiate TTS on first display
     LaunchedEffect(Unit) {
         try {
-            delay(1000) // Delay to ensure TTS readiness
+            delay(2000) // Delay to ensure TTS readiness
             TTSManager.speak("Silakan pilih ruangan pada kategori $category di lantai $floor.")
             val response = apiService.getRooms()
             val markersResponse = apiService.getAllArucoMarkers() // Fetch markers data

@@ -67,7 +67,7 @@ fun MainScreen(
     var isSearching by remember { mutableStateOf(false) }
     var isNavigationMode by remember { mutableStateOf(false) }
     var isTalkBackEnabled by remember { mutableStateOf(true) }
-
+    var isTTSReady by remember { mutableStateOf(false) }
 
 //    val cameraLauncher = rememberLauncherForActivityResult(
 //        contract = ActivityResultContracts.StartActivityForResult()
@@ -181,8 +181,15 @@ fun MainScreen(
         }
     }
 
+    // LaunchedEffect untuk memastikan TTS siap
+    LaunchedEffect(Unit) {
+        // Beri sedikit delay untuk memastikan TTS engine siap
+        delay(Duration.ofMillis(1000))
+        isTTSReady = true
+    }
+
     LaunchedEffect(currentScreen) {
-        if (currentScreen == "main") {
+        if (currentScreen == "main" && isTTSReady) {
             if (!isQrScanned) {
                 // Matikan TalkBack sementara
                 isTalkBackEnabled = false

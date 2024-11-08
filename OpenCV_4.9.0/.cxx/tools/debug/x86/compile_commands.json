@@ -1,7 +1,7 @@
 [
 {
-  "directory": "F:/Capstone/Nanta_integrated/Capstone_BlindNav/OpenCV_4.9.0/.cxx/Debug/92e105r6/x86",
-  "command": "C:\\Users\\asus\\AppData\\Local\\Android\\Sdk\\ndk\\26.1.10909125\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=i686-none-linux-android24 --sysroot=C:/Users/asus/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -o CMakeFiles\\opencv_jni_shared.dir\\dummy.cpp.o -c F:\\Capstone\\Nanta_integrated\\Capstone_BlindNav\\OpenCV_4.9.0\\libcxx_helper\\dummy.cpp",
-  "file": "F:\\Capstone\\Nanta_integrated\\Capstone_BlindNav\\OpenCV_4.9.0\\libcxx_helper\\dummy.cpp"
+  "directory": "C:/Users/salma/Downloads/salma/Capstone_BlindNav/OpenCV_4.9.0/.cxx/Debug/92e105r6/x86",
+  "command": "C:\\Users\\salma\\AppData\\Local\\Android\\Sdk\\ndk\\26.1.10909125\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=i686-none-linux-android24 --sysroot=C:/Users/salma/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -o CMakeFiles\\opencv_jni_shared.dir\\dummy.cpp.o -c C:\\Users\\salma\\Downloads\\salma\\Capstone_BlindNav\\OpenCV_4.9.0\\libcxx_helper\\dummy.cpp",
+  "file": "C:\\Users\\salma\\Downloads\\salma\\Capstone_BlindNav\\OpenCV_4.9.0\\libcxx_helper\\dummy.cpp"
 }
 ]
