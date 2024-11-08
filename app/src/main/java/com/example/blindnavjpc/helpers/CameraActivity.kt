@@ -72,9 +72,9 @@ class CameraActivity : CameraActivity(), CameraBridgeViewBase.CvCameraViewListen
         cameraBridgeViewBase.visibility = SurfaceView.VISIBLE
         localBroadcastManager = LocalBroadcastManager.getInstance(this)
         if (OpenCVLoader.initDebug()) {
-            Log.d("OPENCV:APP", "Successful load of OpenCV")
+//            Log.d("OPENCV:APP", "Successful load of OpenCV")
             cameraBridgeViewBase.enableView()
-            Toast.makeText(this, "OpenCV Loaded!", Toast.LENGTH_LONG).show()
+//            Toast.makeText(this, "OpenCV Loaded!", Toast.LENGTH_LONG).show()
             initAruco()
         }
         localBroadcastManager.registerReceiver(stopCameraReceiver, IntentFilter("STOP_CAMERA"))

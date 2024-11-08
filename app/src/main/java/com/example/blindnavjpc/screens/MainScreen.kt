@@ -66,6 +66,7 @@ fun MainScreen(
 //    var isScannerActive by remember { mutableStateOf(false) }
     var isSearching by remember { mutableStateOf(false) }
     var isNavigationMode by remember { mutableStateOf(false) }
+    var isTalkBackEnabled by remember { mutableStateOf(true) }
 
 
 //    val cameraLauncher = rememberLauncherForActivityResult(
@@ -183,9 +184,24 @@ fun MainScreen(
     LaunchedEffect(currentScreen) {
         if (currentScreen == "main") {
             if (!isQrScanned) {
-                TTSManager.speak("Anda berada di halaman Home. Untuk mengetahui informasi gedung, silakan scan QR terlebih dahulu. Setelah itu, untuk memulai navigasi silakan tekan tombol Pilih Lantai. Namun, jika anda sudah familiar dengan gedung ini, anda dapat menggunakan fitur mencari ruang dengan suara.")
+                // Matikan TalkBack sementara
+                isTalkBackEnabled = false
+                TTSManager.speak("Anda berada di halaman beranda. Untuk mengetahui informasi gedung, silakan pindai aruco terlebih dahulu. Setelah itu, untuk memulai navigasi silakan tekan tombol Pilih Lantai. Namun, jika anda sudah familiar dengan gedung ini, anda dapat menggunakan fitur mencari ruang dengan suara.")
+                // Aktifkan kembali TalkBack setelah 3 detik
+                coroutineScope.launch {
+                    delay(Duration.ofMillis(3000))
+                    isTalkBackEnabled = true
+                }
             } else {
-                TTSManager.speak("Anda berada di halaman Home. Silakan tekan tombol Pilih Lantai untuk memulai navigasi, atau gunakan fitur pencarian suara untuk mencari ruang.")
+
+                // Matikan TalkBack sementara
+                isTalkBackEnabled = false
+                TTSManager.speak("Anda berada di halaman beranda. Silakan tekan tombol Pilih Lantai untuk memulai navigasi, atau gunakan fitur pencarian suara untuk mencari ruang.")
+                // Aktifkan kembali TalkBack setelah 3 detik
+                coroutineScope.launch {
+                    delay(Duration.ofMillis(3000))
+                    isTalkBackEnabled = true
+                }
             }
         }
     }
@@ -194,7 +210,7 @@ fun MainScreen(
         "main" -> {
             MainMenu(
                 onScanClick = {
-                    TTSManager.speak("Scan QR dimulai, silakan arahkan kamera ke QR code. Untuk membatalkan proses ini silakan tekan button X di ujung kiri atas")
+                    TTSManager.speak("Pemindaian Aruco dimulai, silakan arahkan kamera ke penanda aruco")
                     isNavigationMode = false
 //                    isScannerActive = true
 
@@ -271,7 +287,7 @@ fun MainScreen(
                         .sendBroadcast(Intent("CLOSE_CAMERA"))},
                 onScanClick = {
                     isNavigationMode = true
-                    TTSManager.speak("Memulai pemindaian ArUco marker")
+                    TTSManager.speak("Memulai pemindaian Penanda ArUco")
 //                    isScannerActive = true
 
                     val intent = Intent(context, CameraActivity::class.java)
@@ -296,7 +312,7 @@ fun MainMenu(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Home",
+                        text = "Beranda",
                         fontSize = 32.sp,
                         fontFamily = fontFamily,
                         fontWeight = FontWeight.Bold,
@@ -340,18 +356,18 @@ fun MainMenu(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 MainMenuButton(
-                    text = "Scan QR",
+                    text = "Pindai ArUco",
                     onClick = onScanClick,
-                    contentDescription = "Scan QR for Building Information",
+                    contentDescription = "Pindai Aruco",
                     isQrScanned = true  // Scan QR button should always be enabled
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 MainMenuButton(
-                    text = "Select Floor",
+                    text = "Pilih Lantai",
                     onClick = onSelectFloorClick,
-                    contentDescription = "Select Floor",
+                    contentDescription = "Pilih Lantai",
                     isQrScanned = isQrScanned  // This button should be disabled until QR is scanned
                 )
             }
@@ -368,7 +384,7 @@ fun MainMenuButton(
     isQrScanned: Boolean
 ) {
     val isEnabled = when (text) {
-        "Select Floor" -> isQrScanned
+        "Pilih Lantai" -> isQrScanned
         else -> true
     }
 
@@ -378,8 +394,8 @@ fun MainMenuButton(
             .fillMaxWidth()
             .height(80.dp)
             .semantics {
-                this.contentDescription = if (!isEnabled && text == "Select Floor") {
-                    "Select Floor button disabled. Please scan QR first"
+                this.contentDescription = if (!isEnabled && text == "Pilih Lantai") {
+                    "Tombol pilih lantai nonaktif. Pindai ArUco terlebih dahulu"
                 } else {
                     contentDescription
                 }
@@ -411,7 +427,7 @@ fun PreviewMainMenu() {
         onScanClick = {},
         onSelectFloorClick = {},
         onVoiceSearchClick = {},
-        isQrScanned = false  // Preview with QR not scanned
+        isQrScanned = false
     )
 
 }

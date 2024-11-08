@@ -20,6 +20,7 @@ import com.example.blindnavjpc.R
 import com.example.blindnavjpc.dataconnection.ApiService
 import com.example.blindnavjpc.helpers.TTSManager
 import com.example.blindnavjpc.ui.theme.fontFamily
+import kotlinx.coroutines.delay
 
 data class Room(
     val id: Int,
@@ -41,18 +42,20 @@ fun RoomSelectionScreen(
     var rooms by remember { mutableStateOf<List<Room>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
-
     rememberCoroutineScope()
 
-    // Fetch rooms when the screen is first displayed
+    // Fetch rooms and initiate TTS on first display
     LaunchedEffect(Unit) {
         try {
+            delay(1000) // Delay to ensure TTS readiness
+            TTSManager.speak("Silakan pilih ruangan pada kategori $category di lantai $floor.")
             val response = apiService.getRooms()
             val markersResponse = apiService.getAllArucoMarkers() // Fetch markers data
+
             if (response.isSuccessful && markersResponse.isSuccessful) {
                 val allRooms = response.body() ?: emptyList()
                 val allMarkers = markersResponse.body() ?: emptyList()
-                // Filter rooms based on floor and category
+
                 rooms = allRooms
                     .filter { it.floor == floor && it.room_type == category }
                     .map { room ->
@@ -64,18 +67,17 @@ fun RoomSelectionScreen(
                         }
                         Room(
                             id = room.room_id,
-                            arucoId = matchingMarker?.marker_id ?: 0, // Assign marker_id or 0 if not found
+                            arucoId = matchingMarker?.marker_id ?: 0,
                             number = room.room_number,
                             name = room.room_name,
                             fullName = "${room.room_number}: ${room.room_name}"
                         )
                     }
-                TTSManager.speak("Silakan pilih ruangan pada kategori $category di lantai $floor.")
             } else {
-                error = "Failed to fetch rooms: ${response.message()}"
+                error = "Gagal mengambil data ruang ${response.message()}"
             }
         } catch (e: Exception) {
-            error = "Error loading rooms: ${e.message}"
+            error = "Terjadi kesalahan saat memuat data ruang ${e.message}"
         } finally {
             isLoading = false
         }
@@ -115,7 +117,7 @@ fun RoomSelectionScreen(
                 }
                 error != null -> {
                     Text(
-                        text = error ?: "Unknown error occurred",
+                        text = error ?: "Terjadi kesalahan",
                         color = Color.Red,
                         modifier = Modifier
                             .align(Alignment.Center)
@@ -153,7 +155,10 @@ fun RoomSelectionScreen(
             }
 
             Button(
-                onClick = onBackClick,
+                onClick = {
+                    TTSManager.speak("Kembali ke layar sebelumnya")
+                    onBackClick()
+                },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
@@ -181,7 +186,10 @@ fun RoomSelectionScreen(
 @Composable
 private fun RoomButton(room: Room, onRoomSelected: (Room) -> Unit) {
     Button(
-        onClick = { onRoomSelected(room) },
+        onClick = {
+            TTSManager.speak("Memilih ruangan ${room.fullName}")
+            onRoomSelected(room)
+        },
         modifier = Modifier
             .fillMaxWidth()
             .height(80.dp)
@@ -194,7 +202,7 @@ private fun RoomButton(room: Room, onRoomSelected: (Room) -> Unit) {
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         Text(
-            text = room.number,  // Only display the room number
+            text = room.number,
             fontSize = 24.sp,
             fontFamily = fontFamily,
             textAlign = TextAlign.Center,

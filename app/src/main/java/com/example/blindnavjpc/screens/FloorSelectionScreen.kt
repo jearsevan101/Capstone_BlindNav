@@ -1,6 +1,8 @@
 
 package com.example.blindnavjpc.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -20,6 +22,8 @@ import com.example.blindnavjpc.helpers.TTSManager
 import com.example.blindnavjpc.ui.theme.fontFamily
 import com.example.blindnavjpc.dataconnection.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.time.delay
+import java.time.Duration
 
 sealed class RoomsState {
     data object Loading : RoomsState()
@@ -56,6 +60,7 @@ private fun FloorButton(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FloorSelectionScreen(
@@ -65,6 +70,28 @@ fun FloorSelectionScreen(
 ) {
     var roomsState by remember { mutableStateOf<RoomsState>(RoomsState.Loading) }
     val scope = rememberCoroutineScope()
+    var isTTSReady by remember { mutableStateOf(false) }
+    var isTalkBackEnabled by remember { mutableStateOf(true) }
+
+    // LaunchedEffect untuk inisialisasi TTS
+    LaunchedEffect(Unit) {
+        // Delay kecil untuk memastikan TTS engine siap
+        delay(Duration.ofMillis(1000))
+        isTTSReady = true
+    }
+
+    // LaunchedEffect untuk memainkan suara setelah TTS siap
+    LaunchedEffect(isTTSReady) {
+        if (isTTSReady) {
+            // Matikan TalkBack sementara
+            isTalkBackEnabled = false
+            TTSManager.speak("Silakan pilih lantai yang ingin anda tuju.")
+            {
+                // Aktifkan kembali TalkBack setelah TTS selesai
+                isTalkBackEnabled = true
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         scope.launch {
@@ -84,7 +111,7 @@ fun FloorSelectionScreen(
             }
         }
 
-        TTSManager.speak("Silakan pilih lantai yang ingin anda tuju.")
+//        TTSManager.speak("Silakan pilih lantai yang ingin anda tuju.")
     }
 
     Scaffold(

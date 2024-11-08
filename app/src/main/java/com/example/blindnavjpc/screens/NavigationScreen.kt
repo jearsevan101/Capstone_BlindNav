@@ -41,11 +41,28 @@ fun NavigationScreen(navigationState: NavigationState,
                      onBackToHomeClick: () -> Unit,
                      onDiscardClick: () -> Unit,
                      onScanClick: () -> Unit) {
+    var isTTSReady by remember { mutableStateOf(false) }
+    var isTalkBackEnabled by remember { mutableStateOf(true) }
+
     LaunchedEffect(Unit) {
-        TTSManager.speak(
-            "Navigasi akan dimulai. Scanner akan terus aktif untuk mendeteksi marker. " +
-                    "Anda dapat kembali ke layar sebelumnya atau ke layar awal dengan menekan tombol 'kembali' di kiri bawah dan 'home' di kanan bawah. "
-        )
+        // Delay kecil untuk memastikan TTS engine siap
+        delay(Duration.ofMillis(1000))
+        isTTSReady = true
+    }
+        // LaunchedEffect untuk memainkan suara setelah TTS siap
+        LaunchedEffect(isTTSReady) {
+            if (isTTSReady) {
+                // Matikan TalkBack sementara
+                isTalkBackEnabled = false
+                TTSManager.speak(
+                    "Navigasi akan dimulai. Scanner akan terus aktif untuk mendeteksi marker. " +
+                            "Anda dapat kembali ke layar sebelumnya atau ke layar awal dengan menekan tombol 'kembali' di kiri bawah dan 'home' di kanan bawah. "
+                )
+                {
+                    // Aktifkan kembali TalkBack setelah TTS selesai
+                    isTalkBackEnabled = true
+                }
+            }
         // Start continuous scanning immediately
         delay(Duration.ofMillis(10000))
         onScanClick()
@@ -160,7 +177,11 @@ fun NavigationScreen(navigationState: NavigationState,
                         contentColor = Color.White
                     )
                 ) {
-                    Text("Kembali")
+                    Text("Kembali",
+                        fontSize = 24.sp,
+                        fontFamily = fontFamily,
+                        textAlign = TextAlign.Center
+                        )
                 }
 
                 Button(

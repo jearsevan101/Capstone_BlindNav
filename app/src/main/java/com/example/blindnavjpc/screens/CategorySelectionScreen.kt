@@ -24,6 +24,7 @@ import com.example.blindnavjpc.R
 import com.example.blindnavjpc.dataconnection.ApiService
 import com.example.blindnavjpc.helpers.TTSManager
 import com.example.blindnavjpc.ui.theme.fontFamily
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,27 +36,26 @@ fun CategorySelectionScreen(
     onDiscardClick: () -> Unit = {}
 ) {
     var roomsState by remember { mutableStateOf<RoomsState>(RoomsState.Loading) }
+    var isTTSReady by remember { mutableStateOf(false) }
+    var isTalkBackEnabled by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
 
+    // Initialize TTS with a small delay to ensure readiness
     LaunchedEffect(Unit) {
-        scope.launch {
-            try {
-                val response = apiService.getRooms()
-                if (response.isSuccessful) {
-                    response.body()?.let { rooms ->
-                        roomsState = RoomsState.Success(rooms)
-                    } ?: run {
-                        roomsState = RoomsState.Error("Data kosong")
-                    }
-                } else {
-                    roomsState = RoomsState.Error("Gagal mengambil data: ${response.message()}")
-                }
-            } catch (e: Exception) {
-                roomsState = RoomsState.Error("Terjadi kesalahan: ${e.message}")
+        delay(2000)
+        isTTSReady = true
+    }
+
+    // Play the introductory TTS message when ready
+    LaunchedEffect(isTTSReady) {
+        if (isTTSReady) {
+            // Temporarily disable TalkBack
+            isTalkBackEnabled = false
+            TTSManager.speak("Silakan pilih kategori ruangan di lantai $floor.") {
+                // Re-enable TalkBack after TTS finishes speaking
+                isTalkBackEnabled = true
             }
         }
-
-        TTSManager.speak("Silakan pilih kategori ruangan di lantai $floor.")
     }
 
     Scaffold(
@@ -98,7 +98,6 @@ fun CategorySelectionScreen(
                     )
                 }
                 is RoomsState.Success -> {
-                    // Get unique categories for the selected floor
                     val categories = (roomsState as RoomsState.Success)
                         .rooms
                         .filter { it.floor == floor }
@@ -114,7 +113,9 @@ fun CategorySelectionScreen(
                     ) {
                         categories.forEach { category ->
                             CategoryButton(category) {
-                                onCategorySelected(category)
+                                TTSManager.speak("Kategori $category dipilih") {
+                                    onCategorySelected(category)
+                                }
                             }
                         }
                     }

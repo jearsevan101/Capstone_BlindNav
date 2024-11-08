@@ -1,2 +1,2 @@
-ninja: Entering directory `F:\Capstone\Nanta_integrated\Capstone_BlindNav\OpenCV_4.9.0\.cxx\Debug\92e105r6\arm64-v8a'
+ninja: Entering directory `C:\Users\salma\Downloads\salma\Capstone_BlindNav\OpenCV_4.9.0\.cxx\Debug\92e105r6\arm64-v8a'
 ninja: no work to do.

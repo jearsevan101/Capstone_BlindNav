@@ -2,15 +2,32 @@ package com.example.blindnavjpc.helpers
 
 import android.content.Context
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import java.util.*
 
 object TTSManager : TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
     private var isInitialized = false
+    private var onDoneCallback: (() -> Unit)? = null
 
     fun initialize(context: Context) {
         if (tts == null) {
-            tts = TextToSpeech(context, this)
+            tts = TextToSpeech(context, this).apply {
+                setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {
+                        // Handle TTS start (optional, if needed)
+                    }
+
+                    override fun onDone(utteranceId: String?) {
+                        // Callback saat TTS selesai
+                        onDoneCallback?.invoke()
+                    }
+
+                    override fun onError(utteranceId: String?) {
+                        // Handle error (optional, if needed)
+                    }
+                })
+            }
         }
     }
 
@@ -27,18 +44,16 @@ object TTSManager : TextToSpeech.OnInitListener {
         }
     }
 
-    fun speak(text: String) {
+    fun speak(text: String, onDone: (() -> Unit)? = null) {
         if (isInitialized) {
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
-        }
-    }
-    fun readTextWithAccessibility(text: String) {
-        if (isInitialized) {
-            // Speak the text using TTS without creating an AccessibilityEvent
-            speak(text)
+            onDoneCallback = onDone  // Set the callback
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "UniqueID")
         }
     }
 
+    fun readTextWithAccessibility(text: String, onDone: (() -> Unit)? = null) {
+        speak(text, onDone)
+    }
 
     fun shutdown() {
         tts?.stop()
