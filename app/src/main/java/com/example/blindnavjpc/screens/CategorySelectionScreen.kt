@@ -5,6 +5,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -13,25 +18,67 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.blindnavjpc.R
+import com.example.blindnavjpc.dataconnection.ApiService
 import com.example.blindnavjpc.helpers.TTSManager
 import com.example.blindnavjpc.ui.theme.fontFamily
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategorySelectionScreen(
+    apiService: ApiService,
     floor: Int,
     onCategorySelected: (String) -> Unit = {},
     onDiscardClick: () -> Unit = {}
 ) {
-    val categories = getCategoriesForFloor(floor)
-    // Voice guidance when screen is shown
+    var roomsState by remember { mutableStateOf<RoomsState>(RoomsState.Loading) }
+    val scope = rememberCoroutineScope()
+    var isTTSReady by remember { mutableStateOf(false) }
+    var isTalkBackEnabled by remember { mutableStateOf(true) }
+
+    // Inisialisasi delay untuk TTS
     LaunchedEffect(Unit) {
+        delay(2000)  // Delay sebelum TTS dimulai
+        isTTSReady = true
+    }
+
+    // Play TTS ketika siap
+    LaunchedEffect(isTTSReady) {
+        if (isTTSReady) {
+            // Menonaktifkan TalkBack sementara
+            isTalkBackEnabled = false
+            TTSManager.speak("Silakan pilih kategori ruangan di lantai $floor.") {
+                // Mengaktifkan TalkBack setelah TTS selesai
+                isTalkBackEnabled = true
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                val response = apiService.getRooms()
+                if (response.isSuccessful) {
+                    response.body()?.let { rooms ->
+                        roomsState = RoomsState.Success(rooms)
+                    } ?: run {
+                        roomsState = RoomsState.Error("Data kosong")
+                    }
+                } else {
+                    roomsState = RoomsState.Error("Gagal mengambil data: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                roomsState = RoomsState.Error("Terjadi kesalahan: ${e.message}")
+            }
+        }
+
         TTSManager.speak("Silakan pilih kategori ruangan di lantai $floor.")
     }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -56,15 +103,41 @@ fun CategorySelectionScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                categories.forEach { category ->
-                    CategoryButton(category) {
-                        onCategorySelected(category)
+            when (roomsState) {
+                is RoomsState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                is RoomsState.Error -> {
+                    Text(
+                        text = (roomsState as RoomsState.Error).message,
+                        color = Color.Red,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(16.dp)
+                    )
+                }
+                is RoomsState.Success -> {
+                    // Get unique categories for the selected floor
+                    val categories = (roomsState as RoomsState.Success)
+                        .rooms
+                        .filter { it.floor == floor }
+                        .map { it.room_type }
+                        .distinct()
+                        .sorted()
+
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        categories.forEach { category ->
+                            CategoryButton(category) {
+                                onCategorySelected(category)
+                            }
+                        }
                     }
                 }
             }
@@ -96,14 +169,15 @@ fun CategorySelectionScreen(
 }
 
 @Composable
-fun CategoryButton(category: String, onClick: () -> Unit) {
+fun CategoryButton(
+    category: String,
+    onClick: () -> Unit
+) {
     Button(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 24.dp, start = 32.dp, end = 32.dp)
-            .height(80.dp)
-            .semantics { contentDescription = "Pilih kategori $category" },
+            .padding(vertical = 8.dp),
         shape = RoundedCornerShape(15.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = colorResource(id = R.color.secondary),
@@ -113,29 +187,10 @@ fun CategoryButton(category: String, onClick: () -> Unit) {
     ) {
         Text(
             text = category,
-            fontSize = 18.sp,
+            fontSize = 24.sp,
             fontFamily = fontFamily,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
     }
-}
-
-fun getCategoriesForFloor(floor: Int): List<String> {
-    return when (floor) {
-        1 -> listOf("Laboratorium", "Ruang Kelas", "Ruang Kantor dan Staff", "Fasilitas Lain")
-        2 -> listOf("Laboratorium", "Ruang Kelas", "Ruang Kantor dan Staff", "Fasilitas Lain")
-        3 -> listOf("Laboratorium", "Ruang Kelas", "Ruang Kantor dan Staff", "Fasilitas Lain")
-        else -> emptyList()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewCategorySelectionScreen() {
-    CategorySelectionScreen(
-        floor = 1,
-        onCategorySelected = {},
-        onDiscardClick = {}
-    )
 }

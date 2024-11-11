@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "BlindNavJPC"
 include(":app")
+include(":OpenCV_4.9.0")

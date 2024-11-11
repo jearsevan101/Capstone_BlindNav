@@ -1,0 +1,3 @@
+C:/Users/salma/Downloads/salma/Capstone_BlindNav/OpenCV_4.9.0/.cxx/Debug/92e105r6/arm64-v8a/CMakeFiles/opencv_jni_shared.dir
+C:/Users/salma/Downloads/salma/Capstone_BlindNav/OpenCV_4.9.0/.cxx/Debug/92e105r6/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/salma/Downloads/salma/Capstone_BlindNav/OpenCV_4.9.0/.cxx/Debug/92e105r6/arm64-v8a/CMakeFiles/rebuild_cache.dir

@@ -48,8 +48,9 @@ fun LaunchScreen(
     onNavigateToMain: () -> Unit
 ) {
     var isTTSReady by remember { mutableStateOf(false) }
+    var isTalkBackEnabled by remember { mutableStateOf(true) }
 
-    // Tambahkan LaunchedEffect untuk inisialisasi TTS
+    // LaunchedEffect untuk inisialisasi TTS
     LaunchedEffect(Unit) {
         // Delay kecil untuk memastikan TTS engine siap
         delay(Duration.ofMillis(1000))
@@ -59,7 +60,13 @@ fun LaunchScreen(
     // LaunchedEffect untuk memainkan suara setelah TTS siap
     LaunchedEffect(isTTSReady) {
         if (isTTSReady) {
+            // Matikan TalkBack sementara
+            isTalkBackEnabled = false
             TTSManager.speak("Selamat datang di BlindNav. Aplikasi ini akan membantu anda menavigasi gedung dengan mudah. Tekan tombol di tengah layar untuk memulai.")
+            {
+                // Aktifkan kembali TalkBack setelah TTS selesai
+                isTalkBackEnabled = true
+            }
         }
     }
 
@@ -96,13 +103,18 @@ fun LaunchScreen(
             ) {
                 Button(
                     onClick = {
-                        TTSManager.speak("Memulai aplikasi")
+                        // Matikan TalkBack sementara
+                        isTalkBackEnabled = false
+                        TTSManager.speak("Memulai aplikasi") {
+                            // Aktifkan kembali TalkBack setelah TTS selesai
+                            isTalkBackEnabled = true
+                        }
                         onNavigateToMain()
                     },
                     modifier = Modifier
                         .size(250.dp)  // Ukuran tetap untuk membuat lingkaran sempurna
                         .semantics {
-                            contentDescription = "Tombol mulai aplikasi BlindNav"
+                            contentDescription = "Mulai aplikasi BlindNav"
                         },
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(
@@ -122,6 +134,7 @@ fun LaunchScreen(
         }
     }
 }
+
 
 @SuppressLint("NewApi")
 @Preview(showBackground = true)

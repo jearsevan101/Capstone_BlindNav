@@ -1,6 +1,8 @@
 package com.example.blindnavjpc.screens
 
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -21,31 +23,131 @@ import com.example.blindnavjpc.R
 import com.example.blindnavjpc.helpers.ScannerHelper
 import com.example.blindnavjpc.ui.theme.fontFamily
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.example.blindnavjpc.dataconnection.ApiService
 import com.example.blindnavjpc.helpers.SearchBarHelper
 import com.example.blindnavjpc.helpers.TTSManager
 import kotlinx.coroutines.launch
+import com.example.blindnavjpc.dataconnection.NavigationState
+import com.example.blindnavjpc.CameraActivity
+import kotlinx.coroutines.time.delay
+import java.time.Duration
 
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MainScreen(scannerHelper: ScannerHelper) {
+fun MainScreen(
+    navigationState: NavigationState,
+    onDestinationSelected: (currentId: Int, destinationId: Int) -> Unit,
+    onDistanceAngleUpdated: (currentId: Int, distance: Float, angle: Float) -> Unit,
+    apiService: ApiService
+) {
     var currentScreen by remember { mutableStateOf("main") }
     var selectedFloor by remember { mutableIntStateOf(1) }
     var selectedCategory by remember { mutableStateOf("") }
     var selectedRoom by remember { mutableStateOf("") }
+    var selectedRoomID by remember { mutableIntStateOf(1) }
+    var currentArucoID by remember { mutableIntStateOf(1) }
+    var currentDistance by remember { mutableFloatStateOf(1F) }
+    var currentAngle by remember { mutableFloatStateOf(1F) }
     var isQrScanned by remember { mutableStateOf(false) }
+//    var isScannerActive by remember { mutableStateOf(false) }
+    var isSearching by remember { mutableStateOf(false) }
+    var isNavigationMode by remember { mutableStateOf(false) }
+    var isTalkBackEnabled by remember { mutableStateOf(true) }
+    var isTTSReady by remember { mutableStateOf(false) }
+
+//    val cameraLauncher = rememberLauncherForActivityResult(
+//        contract = ActivityResultContracts.StartActivityForResult()
+//    ) { result ->
+//        if (result.resultCode == Activity.RESULT_OK) {
+//            // Get the marker ID from the result data
+//            val markerId = result.data?.getStringExtra("MARKER_ID")
+//            markerId?.let {
+//                currentArucoID = markerId.toInt()
+//            }
+//            val distance = result.data?.getStringExtra("DISTANCE")
+//            distance?.let {
+//                currentDistance = distance.toFloat()*100
+//            }
+//            val angle = result.data?.getStringExtra("ANGLE")
+//            angle?.let {
+//                currentAngle = angle.toFloat()
+//            }
+//            onDistanceAngleUpdated(currentArucoID,currentDistance,currentAngle)
+//
+//            TTSManager.speak("Scanned Marker ID: ${currentArucoID}")
+////            TTSManager.speak("Scanned distance: ${currentDistance}")
+////            TTSManager.speak("Scanned current Angle: ${currentAngle}")
+//            if (isNavigationMode == false){
+//                currentScreen = "main"
+//                isQrScanned = true
+//            }
+//        }
+//    }
 
     val context = LocalContext.current
-    val searchBarHelper = remember { SearchBarHelper(context) }
     val coroutineScope = rememberCoroutineScope()
+    val searchBarHelper = remember {
+        SearchBarHelper(
+            context = context,
+            apiService = apiService,
+            coroutineScope = coroutineScope
+        )
+    }
+// Create broadcast receiver
+    val markerReceiver = remember {
+        object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == CameraActivity.MARKER_UPDATE_ACTION) {
+                    val markerId = intent.getStringExtra(CameraActivity.EXTRA_MARKER_ID)?.toIntOrNull() ?: return
+                    val distance = intent.getStringExtra(CameraActivity.EXTRA_DISTANCE)?.toFloatOrNull() ?: return
+                    val angle = intent.getStringExtra(CameraActivity.EXTRA_ANGLE)?.toFloatOrNull() ?: return
 
+                    currentArucoID = markerId
+                    currentDistance = Math.round(distance * 100*100) / 100f // Convert to cm
+                    currentAngle = Math.round(angle * 100) / 100f;
+                    isQrScanned = true
+
+//                    TTSManager.speak("Scanned Marker ID: $currentArucoID jarak $currentDistance sudut $currentAngle")
+                    if (isNavigationMode == false){
+//                        TTSManager.speak("Anda berada di ${navigationState.currentLocation} Silahkan maju ke depan sejauh ${currentDistance.toInt()} sentimeter")
+//                        CameraActivity.stopCamera()
+                        TTSManager.speak("Silahkan maju ke depan sejauh ${currentDistance.toInt()} centimeter, selanjutnya silahkan pilih ruangan yang ingin dituju")
+                        currentScreen = "main"
+                    }else {
+                        onDistanceAngleUpdated(currentArucoID, currentDistance, currentAngle)
+                    }
+                }
+            }
+        }
+    }
+    // Launch camera
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {  }
+    // Register/unregister receiver
+    DisposableEffect(Unit) {
+        val filter = IntentFilter(CameraActivity.MARKER_UPDATE_ACTION)
+        val localBroadcastManager = LocalBroadcastManager.getInstance(context)
+        localBroadcastManager.registerReceiver(markerReceiver, filter)
+
+        onDispose {
+            localBroadcastManager.unregisterReceiver(markerReceiver)
+        }
+    }
     val voiceLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -58,8 +160,8 @@ fun MainScreen(scannerHelper: ScannerHelper) {
                     onRoomFound = { roomInfo ->
                         selectedFloor = roomInfo.floor
                         selectedCategory = roomInfo.category
-                        selectedRoom = roomInfo.name
-                        val roomDetails = "Menuju ke ${roomInfo.name}, terletak di lantai ${roomInfo.floor} kategori ${roomInfo.category}."
+                        selectedRoom = roomInfo.roomName
+                        val roomDetails = "Menuju ke ${roomInfo.roomName}, terletak di lantai ${roomInfo.floor} kategori ${roomInfo.category}."
                         TTSManager.speak(roomDetails)
 
                         coroutineScope.launch {
@@ -67,21 +169,46 @@ fun MainScreen(scannerHelper: ScannerHelper) {
                             currentScreen = "navigation"
                         }
                     },
-                    onSearchError = {
-                        // Handle search error
+                    onSearchError = { errorMessage ->
+                        // Handle the error message
+                        TTSManager.speak(errorMessage)
+                    },
+                    onSearchStarted = {
+                        isSearching = true
                     }
                 )
             }
         }
     }
 
+    // LaunchedEffect untuk memastikan TTS siap
+    LaunchedEffect(Unit) {
+        // Beri sedikit delay untuk memastikan TTS engine siap
+        delay(Duration.ofMillis(1000))
+        isTTSReady = true
+    }
+
     LaunchedEffect(currentScreen) {
-        if (currentScreen == "main") {
-            // Modify the TTS message based on whether QR has been scanned
+        if (currentScreen == "main" && isTTSReady) {
             if (!isQrScanned) {
-                TTSManager.speak("Anda berada di halaman Home. Untuk mengetahui informasi gedung, silakan scan QR terlebih dahulu. Setelah itu, untuk memulai navigasi silakan tekan tombol Pilih Lantai. Namun, jika anda sudah familiar dengan gedung ini, anda dapat menggunakan fitur mencari ruang dengan suara.")
+                // Matikan TalkBack sementara
+                isTalkBackEnabled = false
+                TTSManager.speak("Anda berada di halaman beranda. Untuk mengetahui informasi gedung, silakan pindai aruco terlebih dahulu. Setelah itu, untuk memulai navigasi silakan tekan tombol Pilih Lantai. Namun, jika anda sudah familiar dengan gedung ini, anda dapat menggunakan fitur mencari ruang dengan suara.")
+                // Aktifkan kembali TalkBack setelah 3 detik
+                coroutineScope.launch {
+                    delay(Duration.ofMillis(3000))
+                    isTalkBackEnabled = true
+                }
             } else {
-                TTSManager.speak("Anda berada di halaman Home. Silakan tekan tombol Pilih Lantai untuk memulai navigasi, atau gunakan fitur pencarian suara untuk mencari ruang.")
+
+                // Matikan TalkBack sementara
+                isTalkBackEnabled = false
+                TTSManager.speak("Anda berada di halaman beranda. Silakan tekan tombol Pilih Lantai untuk memulai navigasi, atau gunakan fitur pencarian suara untuk mencari ruang.")
+                // Aktifkan kembali TalkBack setelah 3 detik
+                coroutineScope.launch {
+                    delay(Duration.ofMillis(3000))
+                    isTalkBackEnabled = true
+                }
             }
         }
     }
@@ -90,20 +217,17 @@ fun MainScreen(scannerHelper: ScannerHelper) {
         "main" -> {
             MainMenu(
                 onScanClick = {
-                    TTSManager.speak("Scan QR dimulai, silakan arahkan kamera ke QR code. Untuk membatalkan proses ini silakan tekan button X di ujung kiri atas")
-                    scannerHelper.startScanning(
-                        onSuccess = {
-                            isQrScanned = true
-                            currentScreen = "main"
-                            TTSManager.speak("Scan berhasil. Silakan pilih lantai untuk memulai navigasi.")
-                        },
-                        onError = {
-                            TTSManager.speak("Terjadi kesalahan dalam pemindaian")
-                        },
-                        onCancelled = {
-                            TTSManager.speak("Pemindaian dibatalkan") // Stop any ongoing TTS
-                        }
-                    )
+                    TTSManager.speak("Pemindaian Aruco dimulai, silakan arahkan kamera ke penanda aruco")
+                    isNavigationMode = false
+//                    isScannerActive = true
+
+                    val intent = Intent(context, CameraActivity::class.java)
+                    cameraLauncher.launch(intent)
+
+//                    if (isQrScanned == true){
+////                        isScannerActive = false
+//                        currentScreen = "main"
+//                    }
                 },
                 onSelectFloorClick = {
                     currentScreen = "selectFloor"
@@ -126,7 +250,8 @@ fun MainScreen(scannerHelper: ScannerHelper) {
                 },
                 onDiscardClick = {
                     currentScreen = "main"
-                }
+                },
+                apiService = apiService
             )
         }
         "categorySelection" -> {
@@ -138,7 +263,8 @@ fun MainScreen(scannerHelper: ScannerHelper) {
                 },
                 onDiscardClick = {
                     currentScreen = "selectFloor"
-                }
+                },
+                apiService = apiService,
             )
         }
         "roomSelection" -> {
@@ -146,18 +272,34 @@ fun MainScreen(scannerHelper: ScannerHelper) {
                 floor = selectedFloor,
                 category = selectedCategory,
                 onRoomSelected = { room ->
-                    selectedRoom = room
+                    selectedRoom = room.name
+                    selectedRoomID = room.arucoId
+                    onDestinationSelected(currentArucoID,selectedRoomID)
                     currentScreen = "navigation"
                 },
                 onBackClick = {
                     currentScreen = "categorySelection"
-                }
+                },
+                apiService = apiService
             )
         }
         "navigation" -> {
             NavigationScreen(
-                onDiscardClick = { currentScreen = "roomSelection" },
-                onBackToHomeClick = { currentScreen = "main" }
+                navigationState = navigationState,
+                onDiscardClick = { currentScreen = "roomSelection"
+                    LocalBroadcastManager.getInstance(context)
+                        .sendBroadcast(Intent("CLOSE_CAMERA"))},
+                onBackToHomeClick = { currentScreen = "main"
+                    LocalBroadcastManager.getInstance(context)
+                        .sendBroadcast(Intent("CLOSE_CAMERA"))},
+                onScanClick = {
+                    isNavigationMode = true
+                    TTSManager.speak("Memulai pemindaian Penanda ArUco")
+//                    isScannerActive = true
+
+                    val intent = Intent(context, CameraActivity::class.java)
+                    cameraLauncher.launch(intent)
+                },
             )
         }
     }
@@ -171,12 +313,13 @@ fun MainMenu(
     onVoiceSearchClick: () -> Unit,
     isQrScanned: Boolean
 ) {
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Home",
+                        text = "Beranda",
                         fontSize = 32.sp,
                         fontFamily = fontFamily,
                         fontWeight = FontWeight.Bold,
@@ -220,18 +363,18 @@ fun MainMenu(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 MainMenuButton(
-                    text = "Scan QR",
+                    text = "Pindai ArUco",
                     onClick = onScanClick,
-                    contentDescription = "Scan QR for Building Information",
+                    contentDescription = "Pindai Aruco",
                     isQrScanned = true  // Scan QR button should always be enabled
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 MainMenuButton(
-                    text = "Select Floor",
+                    text = "Pilih Lantai",
                     onClick = onSelectFloorClick,
-                    contentDescription = "Select Floor",
+                    contentDescription = "Pilih Lantai",
                     isQrScanned = isQrScanned  // This button should be disabled until QR is scanned
                 )
             }
@@ -248,7 +391,7 @@ fun MainMenuButton(
     isQrScanned: Boolean
 ) {
     val isEnabled = when (text) {
-        "Select Floor" -> isQrScanned
+        "Pilih Lantai" -> isQrScanned
         else -> true
     }
 
@@ -258,8 +401,8 @@ fun MainMenuButton(
             .fillMaxWidth()
             .height(80.dp)
             .semantics {
-                this.contentDescription = if (!isEnabled && text == "Select Floor") {
-                    "Select Floor button disabled. Please scan QR first"
+                this.contentDescription = if (!isEnabled && text == "Pilih Lantai") {
+                    "Tombol pilih lantai nonaktif. Pindai ArUco terlebih dahulu"
                 } else {
                     contentDescription
                 }
@@ -291,6 +434,7 @@ fun PreviewMainMenu() {
         onScanClick = {},
         onSelectFloorClick = {},
         onVoiceSearchClick = {},
-        isQrScanned = false  // Preview with QR not scanned
+        isQrScanned = false
     )
+
 }

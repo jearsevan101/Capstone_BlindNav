@@ -1,0 +1,17 @@
+{
+  "installationFolder": "C:\\Users\\salma\\Downloads\\salma\\Capstone_BlindNav\\OpenCV_4.9.0\\build\\intermediates\\prefab_package\\release\\prefab",
+  "gradlePath": ":OpenCV_4.9.0",
+  "packageInfo": {
+    "packageName": "OpenCV_4.9.0",
+    "packageSchemaVersion": 2,
+    "packageDependencies": [],
+    "modules": [
+      {
+        "moduleName": "opencv_jni_shared",
+        "moduleHeaders": "C:\\Users\\salma\\Downloads\\salma\\Capstone_BlindNav\\OpenCV_4.9.0\\native\\jni\\include",
+        "moduleExportLibraries": [],
+        "abis": []
+      }
+    ]
+  }
+}
