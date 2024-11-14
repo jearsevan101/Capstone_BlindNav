@@ -83,7 +83,7 @@ class NavigationManager {
         val turnInstruction = getRequiredTurn(targetAngle)
         return when {
             isCloseToMarker() -> "Anda dekat dengan marker. Mencari marker lainnya."
-            else -> "Maju sejauh ${currentDistance.toInt()} centimeter kemudian $turnInstruction\n"
+            else -> "Maju sejauh ${currentDistance.toInt()-75} centimeter kemudian $turnInstruction\n"
         }
     }
 
