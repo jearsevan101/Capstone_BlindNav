@@ -69,34 +69,6 @@ fun MainScreen(
     var isTalkBackEnabled by remember { mutableStateOf(true) }
     var isTTSReady by remember { mutableStateOf(false) }
 
-//    val cameraLauncher = rememberLauncherForActivityResult(
-//        contract = ActivityResultContracts.StartActivityForResult()
-//    ) { result ->
-//        if (result.resultCode == Activity.RESULT_OK) {
-//            // Get the marker ID from the result data
-//            val markerId = result.data?.getStringExtra("MARKER_ID")
-//            markerId?.let {
-//                currentArucoID = markerId.toInt()
-//            }
-//            val distance = result.data?.getStringExtra("DISTANCE")
-//            distance?.let {
-//                currentDistance = distance.toFloat()*100
-//            }
-//            val angle = result.data?.getStringExtra("ANGLE")
-//            angle?.let {
-//                currentAngle = angle.toFloat()
-//            }
-//            onDistanceAngleUpdated(currentArucoID,currentDistance,currentAngle)
-//
-//            TTSManager.speak("Scanned Marker ID: ${currentArucoID}")
-////            TTSManager.speak("Scanned distance: ${currentDistance}")
-////            TTSManager.speak("Scanned current Angle: ${currentAngle}")
-//            if (isNavigationMode == false){
-//                currentScreen = "main"
-//                isQrScanned = true
-//            }
-//        }
-//    }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -110,7 +82,7 @@ fun MainScreen(
 // Create broadcast receiver
     val markerReceiver = remember {
         object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
+            override fun onReceive(receiverContext: Context?, intent: Intent?) {
                 if (intent?.action == CameraActivity.MARKER_UPDATE_ACTION) {
                     val markerId = intent.getStringExtra(CameraActivity.EXTRA_MARKER_ID)?.toIntOrNull() ?: return
                     val distance = intent.getStringExtra(CameraActivity.EXTRA_DISTANCE)?.toFloatOrNull() ?: return
@@ -118,22 +90,38 @@ fun MainScreen(
 
                     currentArucoID = markerId
                     currentDistance = Math.round(distance * 100*100) / 100f // Convert to cm
-                    currentAngle = Math.round(angle * 100) / 100f;
+                    currentAngle = Math.round(angle * 100) / 100f
                     isQrScanned = true
 
-//                    TTSManager.speak("Scanned Marker ID: $currentArucoID jarak $currentDistance sudut $currentAngle")
-                    if (isNavigationMode == false){
-//                        TTSManager.speak("Anda berada di ${navigationState.currentLocation} Silahkan maju ke depan sejauh ${currentDistance.toInt()} sentimeter")
-//                        CameraActivity.stopCamera()
+                    if (!isNavigationMode) {
                         TTSManager.speak("Silahkan maju ke depan sejauh ${currentDistance.toInt()} centimeter, selanjutnya silahkan pilih ruangan yang ingin dituju")
-                        currentScreen = "main"
-                    }else {
+
+                        // Use coroutineScope to handle the delay and camera stop
+                        coroutineScope.launch {
+                            // Wait for TTS to finish (adjust delay as needed)
+//                            delay(3000)
+                            // Use the remembered context instead of receiver context
+                            LocalBroadcastManager.getInstance(context)
+                                .sendBroadcast(Intent("STOP_CAMERA"))
+                            currentScreen = "main"
+                        }
+                    } else {
+                        if (currentArucoID == selectedRoomID){
+                            TTSManager.speak("Anda telah tiba di lokasi tujuan")
+                            coroutineScope.launch {
+                                // Use the remembered context instead of receiver context
+                                LocalBroadcastManager.getInstance(context)
+                                    .sendBroadcast(Intent("STOP_CAMERA"))
+                                currentScreen = "main"
+                            }
+                        }
                         onDistanceAngleUpdated(currentArucoID, currentDistance, currentAngle)
                     }
                 }
             }
         }
     }
+
     // Launch camera
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
