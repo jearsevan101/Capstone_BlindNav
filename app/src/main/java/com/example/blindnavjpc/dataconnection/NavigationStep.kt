@@ -52,7 +52,12 @@ class NavigationManager {
 
     fun getRequiredTurn(targetAngle: Float): String {
 //        val angleDiff = (targetAngle - currentAngle + 360) % 360
-        val angleDiff = (targetAngle - currentAngle)
+        var angleDiff = (targetAngle - currentAngle)
+        if (angleDiff >=180){
+            angleDiff = -( 360 - angleDiff)
+        }else if (angleDiff <= -180){
+            angleDiff = 360 + angleDiff
+        }
 //        TTSManager.speak("Target sudut $targetAngle   sudut saat ini $currentAngle     perbandingan sudut  $angleDiff ")
 
         return when {
